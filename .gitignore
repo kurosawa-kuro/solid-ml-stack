@@ -1,0 +1,71 @@
+# ------------------------------------------------------------
+# Python / ML project .gitignore (typical settings)
+# ------------------------------------------------------------
+
+# --- Python byte‑code & caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual environment directories ---
+.env/
+.venv/
+venv/
+
+# --- OS / Editor junk ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Jupyter Notebook checkpoints ---
+.ipynb_checkpoints/
+
+# --- Test / coverage output ---
+dist/
+build/
+*.egg-info/
+htmlcov/
+.coverage*
+pytest_cache/
+
+# --- Data artifacts ---
+# *.csv
+*.tsv
+*.parquet
+*.feather
+*.h5
+*.zip
+*.gz
+*.xz
+
+# Keep sample data
+!data/**/*.sample.*
+!data/**/*.example.*
+
+# --- Models / large binaries ---
+*.pkl
+*.joblib
+*.onnx
+
+# --- ML experiment trackers ---
+mlruns/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- DuckDB & SQLite files ---
+*.duckdb
+*.db
+
+# --- Secrets & environment files ---
+.env.local
+.env.*
+
+# --- Ansible artifacts ---
+*.retry
+
+
+
+data/dwh/solid_ml.duckdb

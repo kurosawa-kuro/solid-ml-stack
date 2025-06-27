@@ -28,10 +28,33 @@
 
 **セットアップ例 (WSL 上)**
 
-```bash
-python3 -m pip install -U pip \
+```
+# 事前にビルド系ライブラリを入れておくと失敗しにくい
+sudo apt update
+sudo apt install -y build-essential python3-dev libffi-dev libssl-dev \
+                    libblas-dev liblapack-dev gfortran
+
+# PEP 668 を回避して一括インストール
+python3 -m pip install --break-system-packages -U pip \
   mlflow polars[all] lightgbm catboost xgboost \
   optuna[lightgbm] duckdb
+```
+
+```
+python3 - <<'PY'
+import importlib, pkg_resources, textwrap
+
+pkgs = [
+    "mlflow", "polars", "lightgbm", "catboost", "xgboost",
+    "optuna", "duckdb"
+]
+for p in pkgs:
+    try:
+        v = pkg_resources.get_distribution(p).version
+        print(f"{p:10}  {v}")
+    except Exception as e:
+        print(f"{p:10}  NOT FOUND ({e.__class__.__name__})")
+PY
 ```
 
 ---
@@ -115,3 +138,5 @@ WSL (Ubuntu 標準 Python)
 
 *環境構築ゼロ* → *モデル改善に全力*。この構成でまず 1 コンペ完走し、
 詰まった箇所だけ局所的にツール追加すれば OK。さらに質問があれば気軽にどうぞ！
+
+
