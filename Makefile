@@ -2,7 +2,7 @@
 
 .PHONY: import-raw-data
 import-raw-data:
-	python3 src/import-raw-data.py
+	python3 src/bronze.py
 
 # Default target
 run: import-raw-data
