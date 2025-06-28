@@ -88,7 +88,7 @@ ml-ensemble:
 	python3 src/ml/train.py --db $(ML_DB) --model ensemble
 
 ml-stack:
-	python3 src/ml/train.py --db $(ML_DB) --model stack
+	python3 src/ml/train.py --db $(ML_DB) --model stacking
 
 ml-all:
 	$(MAKE) ml-xgb
@@ -96,7 +96,7 @@ ml-all:
 	$(MAKE) ml-lgbm
 	$(MAKE) ml-ensemble
 	$(MAKE) ml-stack
-	python3 src/ml/ml_report.py
+	#	python3 src/ml/ml_report.py
 
 ml-help:
 	@echo "ML targets:"

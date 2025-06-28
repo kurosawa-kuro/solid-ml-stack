@@ -1,14 +1,16 @@
 import argparse
 import numpy as np
+import pandas as pd
+import sys
+import os
+
+# パスを追加してモジュールをインポート可能にする
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from base import load_data
-from xgb_runner import fit_predict_xgb
-from cat_runner import fit_predict_cat
-from lgbm_runner import fit_predict_lgbm
-from ensemble import fit_predict_ensemble
-from stack import fit_predict_stack
+from model_factory import model_factory
 import csv
 from datetime import datetime
-import os
 
 RESULTS_FILE = "ml_results.csv"
 
@@ -28,24 +30,27 @@ def main():
     parser.add_argument("--db", type=str, default="../../data/dwh/solid_ml.duckdb", help="DuckDB path")
     parser.add_argument("--table", type=str, default="gold_house_features", help="Table name")
     parser.add_argument("--target", type=str, default="price", help="Target column")
-    parser.add_argument("--model", type=str, default="xgb", choices=["xgb", "cat", "lgbm", "ensemble", "stack"], help="Model type")
+    parser.add_argument("--model", type=str, default="xgb", help="Model type")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
 
     X, y = load_data(args.db, args.table, args.target)
+    
+    # yをpd.Seriesに確実に変換
+    if not isinstance(y, pd.Series):
+        y = pd.Series(y)
 
-    if args.model == "xgb":
-        _, y_pred, score = fit_predict_xgb(X, y, args.seed)
-    elif args.model == "cat":
-        _, y_pred, score = fit_predict_cat(X, y, args.seed)
-    elif args.model == "lgbm":
-        _, y_pred, score = fit_predict_lgbm(X, y, args.seed)
-    elif args.model == "ensemble":
-        y_pred, score = fit_predict_ensemble(X, y, args.seed)
-    elif args.model == "stack":
-        _, y_pred, score = fit_predict_stack(X, y, args.seed)
-    else:
-        raise ValueError("Unknown model type")
+    # 新しいアーキテクチャを使用
+    if not model_factory.has_model(args.model):
+        available_models = model_factory.get_available_models()
+        raise ValueError(f"Unknown model: {args.model}. Available models: {available_models}")
+
+    # モデルを作成して学習
+    model = model_factory.create_model(args.model)
+    result = model.fit_predict(X, y)
+    
+    score = result.score
+    y_pred = result.y_pred
 
     print(f"Model: {args.model}")
     print(f"RMSE: {score:.4f}")
