@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import sys
 import os
+from pathlib import Path
 
 # srcディレクトリをPYTHONPATHに追加
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -12,12 +13,18 @@ from models.model_factory import model_factory  # type: ignore
 import csv
 from datetime import datetime
 
-RESULTS_FILE = "ml_results.csv"
+# プロジェクトルートを取得
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+RESULTS_FILE = ARTIFACTS_DIR / "ml_results.csv"
 
 
 def save_result(model_name, rmse, mae=None, r2=None):
+    # artifactsディレクトリが存在しない場合は作成
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_exists = os.path.isfile(RESULTS_FILE)
+    file_exists = RESULTS_FILE.exists()
     
     with open(RESULTS_FILE, mode="a", newline="") as f:
         writer = csv.writer(f)

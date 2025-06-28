@@ -70,3 +70,4 @@ logs/
 
 data/dwh/solid_ml.duckdb
 /target/
+artifacts/ml_results.csv
