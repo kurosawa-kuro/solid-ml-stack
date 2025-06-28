@@ -4,13 +4,13 @@
 
 # Individual layer processing
 bronze:
-	python3 src/bronze.py
+	python3 src/pipeline.py --steps bronze
 
 silver:
-	python3 src/silver.py
+	python3 src/pipeline.py --steps silver
 
 gold:
-	python3 src/gold.py
+	python3 src/pipeline.py --steps gold
 
 # Complete pipeline execution
 pipeline:
@@ -76,19 +76,22 @@ test-pipeline:
 ML_DB ?= data/dwh/solid_ml.duckdb
 
 ml-xgb:
-	python3 src/ml/train.py --db $(ML_DB) --model xgb
+	python3 src/pipelines/train.py --db $(ML_DB) --model xgb
+
+ml-xgb-cv:
+	python3 src/pipelines/train.py --db $(ML_DB) --model xgb --cv-folds 5
 
 ml-cat:
-	python3 src/ml/train.py --db $(ML_DB) --model cat
+	python3 src/pipelines/train.py --db $(ML_DB) --model cat
 
 ml-lgbm:
-	python3 src/ml/train.py --db $(ML_DB) --model lgbm
+	python3 src/pipelines/train.py --db $(ML_DB) --model lgbm
 
 ml-ensemble:
-	python3 src/ml/train.py --db $(ML_DB) --model ensemble
+	python3 src/pipelines/train.py --db $(ML_DB) --model ensemble
 
 ml-stack:
-	python3 src/ml/train.py --db $(ML_DB) --model stacking
+	python3 src/pipelines/train.py --db $(ML_DB) --model stacking
 
 ml-all:
 	$(MAKE) ml-xgb
@@ -101,6 +104,7 @@ ml-all:
 ml-help:
 	@echo "ML targets:"
 	@echo "  ml-xgb       - XGBoost モデルの学習・推論"
+	@echo "  ml-xgb-cv    - XGBoost モデルのクロスバリデーション"
 	@echo "  ml-cat       - CatBoost モデルの学習・推論"
 	@echo "  ml-lgbm      - LightGBM モデルの学習・推論"
 	@echo "  ml-ensemble  - アンサンブル推論"

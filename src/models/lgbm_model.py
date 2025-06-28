@@ -1,9 +1,17 @@
+import sys
+import os
+
+# srcディレクトリとmodelsディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.dirname(__file__))
+
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional
 from base_model import BaseModel, ModelConfig
-from config import LightGBMConfig
+from utils.config import LightGBMConfig
+from utils.base import set_seed
 
 
 class LightGBMModel(BaseModel):
@@ -18,8 +26,25 @@ class LightGBMModel(BaseModel):
     
     def _train(self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]) -> Any:
         """LightGBMモデルを学習"""
-        from base import set_seed
         set_seed(self.config.seed)
+        
+        # --- データを確実に数値に変換 ---
+        if isinstance(X, pd.DataFrame):
+            X = X.copy()  # 元データを変更しないようコピー
+            # カテゴリ変数をlabel encoding
+            for col in X.select_dtypes(include=['object', 'category']).columns:
+                X[col] = X[col].astype('category').cat.codes
+            # 全ての列をfloat型に変換
+            X = X.astype(float)
+        elif isinstance(X, np.ndarray):
+            # numpy配列の場合、文字列が含まれている可能性があるため
+            # 一旦pandas DataFrameに変換してから処理
+            X_df = pd.DataFrame(X)
+            # カテゴリ変数をlabel encoding
+            for col in X_df.select_dtypes(include=['object', 'category']).columns:
+                X_df[col] = X_df[col].astype('category').cat.codes
+            # 全ての列をfloat型に変換
+            X = X_df.astype(float).values
         
         # Dataset作成
         dtrain = lgb.Dataset(X, label=y)
@@ -45,6 +70,24 @@ class LightGBMModel(BaseModel):
     
     def _predict(self, model: Any, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
         """LightGBMモデルで予測"""
+        # --- データを確実に数値に変換 ---
+        if isinstance(X, pd.DataFrame):
+            X = X.copy()  # 元データを変更しないようコピー
+            # カテゴリ変数をlabel encoding
+            for col in X.select_dtypes(include=['object', 'category']).columns:
+                X[col] = X[col].astype('category').cat.codes
+            # 全ての列をfloat型に変換
+            X = X.astype(float)
+        elif isinstance(X, np.ndarray):
+            # numpy配列の場合、文字列が含まれている可能性があるため
+            # 一旦pandas DataFrameに変換してから処理
+            X_df = pd.DataFrame(X)
+            # カテゴリ変数をlabel encoding
+            for col in X_df.select_dtypes(include=['object', 'category']).columns:
+                X_df[col] = X_df[col].astype('category').cat.codes
+            # 全ての列をfloat型に変換
+            X = X_df.astype(float).values
+        
         return model.predict(X)
     
     def get_feature_importance(self, importance_type: str = "gain") -> dict:
