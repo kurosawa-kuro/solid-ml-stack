@@ -2,10 +2,10 @@
 
 .PHONY: import-raw-data bronze silver gold run-all
 import-raw-data:
-	python3 src/blonze.py
+	python3 src/bronze.py
 
 bronze:
-	python3 src/blonze.py
+	python3 src/bronze.py
 
 silver:
 	python3 src/silver.py

@@ -6,3 +6,6 @@ catboost
 xgboost
 optuna[lightgbm]
 duckdb
+scikit-learn
+pandas
+numpy
