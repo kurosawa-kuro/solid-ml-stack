@@ -85,7 +85,7 @@ def create_gold_layer_features(duckdb_path: str = "data/dwh/solid_ml.duckdb"):
         'GOOD': 3,
         'EXCELLENT': 4
     }
-    df['condition_score'] = df['condition'].map(condition_mapping)
+    df['condition_score'] = df['condition'].replace(condition_mapping)
     
     # 7. 追加の派生特徴量
     # 価格効率性（平米単価の逆数）
@@ -255,17 +255,17 @@ def create_ml_ready_features(duckdb_path: str = "data/dwh/solid_ml.duckdb"):
         encoded_features = ohe.fit_transform(df[categorical_columns])
         
         # エンコードされた特徴量名を取得
-        feature_names = []
+        feature_names: list[str] = []
         for i, col in enumerate(categorical_columns):
             categories = ohe.categories_[i][1:]  # drop='first'なので最初を除外
             feature_names.extend([f"{col}_{cat}" for cat in categories])
         
         # エンコードされた特徴量をDataFrameに追加
-        encoded_df = pd.DataFrame(encoded_features, columns=feature_names, index=df.index)
+        encoded_df = pd.DataFrame(encoded_features, columns=feature_names, index=df.index)  # type: ignore
         df = pd.concat([df, encoded_df], axis=1)
         
         # 元のカテゴリ列を削除
-        df = df.drop(columns=categorical_columns)
+        df = df.drop(columns=list(categorical_columns))
     
     # 3. 特徴量スケーリング
     from sklearn.preprocessing import StandardScaler
