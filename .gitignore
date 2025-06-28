@@ -66,10 +66,33 @@ logs/
 # --- Ansible artifacts ---
 *.retry
 
-
-
+# --- Project specific artifacts ---
 data/dwh/solid_ml.duckdb
 /target/
 artifacts/ml_results.csv
 catboost_info/catboost_training.json
 artifacts/
+
+# --- Additional ML artifacts ---
+# CatBoost specific files
+catboost_info/
+*.tsv
+events.out.tfevents
+
+# Experiment directories
+experiments/
+
+# Feature files
+features/
+
+# Metrics files
+metrics/
+
+# Preprocessing artifacts
+target/preprocessing_artifacts/
+
+# TensorBoard logs
+*.tfevents.*
+
+# Model checkpoints and temporary files
+tmp/
