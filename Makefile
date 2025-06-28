@@ -76,22 +76,22 @@ test-pipeline:
 ML_DB ?= data/dwh/solid_ml.duckdb
 
 ml-xgb:
-	python3 src/ml/training/train.py --db $(ML_DB) --model xgb
+	python3 -m src.ml.training.train --db $(ML_DB) --model xgb
 
 ml-xgb-cv:
-	python3 src/ml/training/train.py --db $(ML_DB) --model xgb --cv-folds 5
+	python3 -m src.ml.training.train --db $(ML_DB) --model xgb --cv-folds 5
 
 ml-cat:
-	python3 src/ml/training/train.py --db $(ML_DB) --model cat
+	python3 -m src.ml.training.train --db $(ML_DB) --model cat
 
 ml-lgbm:
-	python3 src/ml/training/train.py --db $(ML_DB) --model lgbm
+	python3 -m src.ml.training.train --db $(ML_DB) --model lgbm
 
 ml-ensemble:
-	python3 src/ml/training/train.py --db $(ML_DB) --model ensemble
+	python3 -m src.ml.training.train --db $(ML_DB) --model ensemble
 
 ml-stack:
-	python3 src/ml/training/train.py --db $(ML_DB) --model stacking
+	python3 -m src.ml.training.train --db $(ML_DB) --model stacking
 
 ml-all:
 	$(MAKE) ml-xgb
@@ -99,10 +99,10 @@ ml-all:
 	$(MAKE) ml-lgbm
 	$(MAKE) ml-ensemble
 	$(MAKE) ml-stack
-	python3 src/ml/training/ml_report.py
+	python3 -m src.ml.training.ml_report
 
 ml-report:
-	python3 src/ml/training/ml_report.py
+	python3 -m src.ml.training.ml_report
 
 ml-help:
 	@echo "ML targets:"

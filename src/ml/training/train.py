@@ -1,18 +1,18 @@
 import argparse
+import os
+import sys
+from pathlib import Path
+from typing import Tuple, Union
 import numpy as np
 import pandas as pd
-import sys
-import os
-from pathlib import Path
+import warnings
+warnings.filterwarnings('ignore')
 import json
 from datetime import datetime
 from typing import Optional
 
-# srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from utils.base import load_data  # type: ignore
-from ml.models.model_factory import model_factory  # type: ignore
+from src.ml.models.model_factory import ModelFactory
+from src.utils.base import load_data  # type: ignore
 
 # プロジェクトルートを取得（現在のディレクトリから相対的に取得）
 current_dir = Path.cwd()
@@ -102,17 +102,17 @@ def main():
 
     X, y = load_data(args.db, args.table, args.target)
     
-    # yをpd.Seriesに確実に変換
-    if not isinstance(y, pd.Series):
-        y = pd.Series(y)
-
+    print(f"Model: {args.model}")
+    print(f"Data shape: {X.shape}")
+    print(f"Target shape: {y.shape}")
+    
     # 新しいアーキテクチャを使用
-    if not model_factory.has_model(args.model):
-        available_models = model_factory.get_available_models()
+    if not ModelFactory.has_model(args.model):
+        available_models = ModelFactory.get_available_models()
         raise ValueError(f"Unknown model: {args.model}. Available models: {available_models}")
 
     # モデルを作成して学習
-    model = model_factory.create_model(args.model)
+    model = ModelFactory.create_model(args.model)
     result = model.fit_predict(X, y)
     
     # 評価指標計算

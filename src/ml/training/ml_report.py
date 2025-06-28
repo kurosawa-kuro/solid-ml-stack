@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """ML実験結果レポート生成スクリプト"""
 
-import sys
-import os
-from pathlib import Path
-import pandas as pd
-import numpy as np
-from datetime import datetime
 import argparse
+import os
+import sys
+from pathlib import Path
+from typing import Dict, Any, List
+import pandas as pd
 import json
+from datetime import datetime
+import warnings
+warnings.filterwarnings('ignore')
 
-# srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
-from utils.config import Config
-from ml.models.model_factory import model_factory
+from src.ml.models.model_factory import ModelFactory
+from src.utils.config import Config
 
 
 def load_ml_results(config: Config) -> pd.DataFrame:
@@ -89,7 +88,7 @@ def generate_feature_importance_report(config: Config) -> str:
     
     for model_name in available_models:
         try:
-            model = model_factory.create_model(model_name)
+            model = ModelFactory.create_model(model_name)
             # ダミーデータで特徴量重要度を取得（実際のデータがない場合）
             report.append(f"\n📊 {model_name.upper()} Feature Importance:")
             report.append("-" * 30)

@@ -1,27 +1,40 @@
-# ------------------------------------------------------------
-# Python / ML project .gitignore (typical settings)
-# ------------------------------------------------------------
+# ============================================================
+# SOLID ML Stack - Git Ignore Configuration
+# ============================================================
 
-# --- Python byte‑code & caches ---
+# ============================================================
+# PYTHON ENVIRONMENT
+# ============================================================
+
+# Python bytecode and cache files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# --- Virtual environment directories ---
+# Virtual environments
 .env/
 .venv/
 venv/
 
-# --- OS / Editor junk ---
-.DS_Store
+# ============================================================
+# DEVELOPMENT TOOLS
+# ============================================================
+
+# IDE and editor files
 .idea/
 .vscode/
 *.swp
+*.swo
 
-# --- Jupyter Notebook checkpoints ---
-.ipynb_checkpoints/
+# OS generated files
+.DS_Store
+Thumbs.db
 
-# --- Test / coverage output ---
+# ============================================================
+# TESTING AND COVERAGE
+# ============================================================
+
+# Test artifacts
 dist/
 build/
 *.egg-info/
@@ -29,8 +42,12 @@ htmlcov/
 .coverage*
 pytest_cache/
 
-# --- Data artifacts ---
-# *.csv
+# ============================================================
+# DATA FILES
+# ============================================================
+
+# Data file formats (excluding sample data)
+*.csv
 *.tsv
 *.parquet
 *.feather
@@ -39,37 +56,78 @@ pytest_cache/
 *.gz
 *.xz
 
-# Keep sample data
+# Database files
+*.duckdb
+*.db
+
+# Keep sample and example data
 !data/**/*.sample.*
 !data/**/*.example.*
 
-# --- Models / large binaries ---
+# ============================================================
+# MACHINE LEARNING ARTIFACTS
+# ============================================================
+
+# Model files
 *.pkl
 *.joblib
 *.onnx
 
-# --- ML experiment trackers ---
+# ML experiment tracking
 mlruns/
+experiments/
 
-# --- Logs ---
+# Feature engineering
+features/
+metrics/
+
+# Model training artifacts
+catboost_info/
+events.out.tfevents
+*.tfevents.*
+
+# Preprocessing artifacts
+target/preprocessing_artifacts/
+
+# ============================================================
+# JUPYTER NOTEBOOKS
+# ============================================================
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# ============================================================
+# LOGS AND TEMPORARY FILES
+# ============================================================
+
+# Log files
 *.log
 logs/
 
-# --- DuckDB & SQLite files ---
-*.duckdb
-*.db
+# Temporary files
+tmp/
 
-# --- Secrets & environment files ---
+# ============================================================
+# SECURITY AND CONFIGURATION
+# ============================================================
+
+# Environment and secret files
 .env.local
 .env.*
 
-# --- Ansible artifacts ---
+# Ansible artifacts
 *.retry
 
+# ============================================================
+# PROJECT-SPECIFIC EXCLUSIONS
+# ============================================================
 
-
+# Specific database files
 data/dwh/solid_ml.duckdb
+
+# Build artifacts
 /target/
-artifacts/ml_results.csv
-catboost_info/catboost_training.json
+
+# ML results
 artifacts/
+artifacts/ml_results.csv
