@@ -20,15 +20,15 @@ import sys
 from pathlib import Path
 from typing import List
 
-from config import (
+from utils.config import (
     Config, DatabaseManager, setup_logging, 
     log_step, log_success, log_error, create_parser
 )
 
 # Import processing modules
-from bronze import main as bronze_main
-from silver import main as silver_main
-from gold import main as gold_main
+from data_stage.bronze_stage import main as bronze_main
+from data_stage.silver_stage import main as silver_main
+from data_stage.gold_stage import main as gold_main
 
 
 def validate_pipeline_dependencies(config: Config, steps: List[str], logger) -> bool:

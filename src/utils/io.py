@@ -5,10 +5,21 @@ import pandas as pd
 from datetime import datetime
 from typing import Union, Optional
 import json
+from pathlib import Path
+
+# プロジェクトルートを取得
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+DEFAULT_RESULTS_FILE = ARTIFACTS_DIR / "ml_results.csv"
 
 
-def save_result(model_name: str, score: float, results_file: str = "ml_results.csv"):
+def save_result(model_name: str, score: float, results_file: Optional[str] = None):
     """結果をCSVファイルに保存"""
+    if results_file is None:
+        results_file = str(DEFAULT_RESULTS_FILE)
+        # artifactsディレクトリが存在しない場合は作成
+        ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     file_exists = os.path.isfile(results_file)
     
@@ -36,8 +47,11 @@ def save_predictions(model_name: str, y_pred: np.ndarray, timestamp: datetime, m
     pred_df.to_csv(filepath, index=False)
 
 
-def load_latest_results(results_file: str = "ml_results.csv") -> dict:
+def load_latest_results(results_file: Optional[str] = None) -> dict:
     """最新の結果を読み込み"""
+    if results_file is None:
+        results_file = str(DEFAULT_RESULTS_FILE)
+    
     latest = {}
     
     if not os.path.exists(results_file):
@@ -57,8 +71,11 @@ def load_latest_results(results_file: str = "ml_results.csv") -> dict:
     return latest
 
 
-def get_best_model(results_file: str = "ml_results.csv") -> Optional[tuple]:
+def get_best_model(results_file: Optional[str] = None) -> Optional[tuple]:
     """最良モデルを取得"""
+    if results_file is None:
+        results_file = str(DEFAULT_RESULTS_FILE)
+    
     latest = load_latest_results(results_file)
     
     if not latest:

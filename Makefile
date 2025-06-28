@@ -4,28 +4,28 @@
 
 # Individual layer processing
 bronze:
-	python3 src/bronze.py
+	python3 src/pipelines/main.py --steps bronze
 
 silver:
-	python3 src/silver.py
+	python3 src/pipelines/main.py --steps silver
 
 gold:
-	python3 src/gold.py
+	python3 src/pipelines/main.py --steps gold
 
 # Complete pipeline execution
 pipeline:
-	python3 src/pipeline.py
+	python3 src/pipelines/main.py
 
 # Pipeline with specific steps
 bronze-silver:
-	python3 src/pipeline.py --steps bronze silver
+	python3 src/pipelines/main.py --steps bronze silver
 
 silver-gold:
-	python3 src/pipeline.py --steps silver gold
+	python3 src/pipelines/main.py --steps silver gold
 
 # Check pipeline status
 status:
-	python3 src/pipeline.py --status-only
+	python3 src/pipelines/main.py --status-only
 
 # Clean generated files
 clean:
@@ -70,25 +70,28 @@ test-gold:
 	python3 src/gold.py --log-level INFO
 
 test-pipeline:
-	python3 src/pipeline.py --log-level INFO
+	python3 src/pipelines/main.py --log-level INFO
 
 # MLモデル実行
 ML_DB ?= data/dwh/solid_ml.duckdb
 
 ml-xgb:
-	python3 src/ml/train.py --db $(ML_DB) --model xgb
+	python3 src/pipelines/train.py --db $(ML_DB) --model xgb
+
+ml-xgb-cv:
+	python3 src/pipelines/train.py --db $(ML_DB) --model xgb --cv-folds 5
 
 ml-cat:
-	python3 src/ml/train.py --db $(ML_DB) --model cat
+	python3 src/pipelines/train.py --db $(ML_DB) --model cat
 
 ml-lgbm:
-	python3 src/ml/train.py --db $(ML_DB) --model lgbm
+	python3 src/pipelines/train.py --db $(ML_DB) --model lgbm
 
 ml-ensemble:
-	python3 src/ml/train.py --db $(ML_DB) --model ensemble
+	python3 src/pipelines/train.py --db $(ML_DB) --model ensemble
 
 ml-stack:
-	python3 src/ml/train.py --db $(ML_DB) --model stacking
+	python3 src/pipelines/train.py --db $(ML_DB) --model stacking
 
 ml-all:
 	$(MAKE) ml-xgb
@@ -96,13 +99,18 @@ ml-all:
 	$(MAKE) ml-lgbm
 	$(MAKE) ml-ensemble
 	$(MAKE) ml-stack
-	#	python3 src/ml/ml_report.py
+	python3 src/pipelines/ml_report.py
+
+ml-report:
+	python3 src/pipelines/ml_report.py
 
 ml-help:
 	@echo "ML targets:"
 	@echo "  ml-xgb       - XGBoost モデルの学習・推論"
+	@echo "  ml-xgb-cv    - XGBoost モデルのクロスバリデーション"
 	@echo "  ml-cat       - CatBoost モデルの学習・推論"
 	@echo "  ml-lgbm      - LightGBM モデルの学習・推論"
 	@echo "  ml-ensemble  - アンサンブル推論"
 	@echo "  ml-stack     - スタッキング推論"
 	@echo "  ml-all       - 全MLモデル一括実行"
+	@echo "  ml-report    - ML実験結果レポート生成"

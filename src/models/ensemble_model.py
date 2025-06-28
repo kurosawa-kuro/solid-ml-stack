@@ -1,8 +1,15 @@
+import sys
+import os
+
+# srcディレクトリとmodelsディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.dirname(__file__))
+
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional, Dict, List
 from base_model import BaseModel, ModelConfig, ModelResult
-from config import EnsembleConfig
+from utils.config import EnsembleConfig
 import logging
 
 logger = logging.getLogger(__name__)
@@ -172,7 +179,7 @@ class StackingModel(BaseModel):
         # メタモデルを学習
         logger.info(f"Training meta model: {self.meta_model_name}")
         self.meta_model = model_factory.create_model(self.meta_model_name)
-        meta_result = self.meta_model.fit_predict(meta_features, y)
+        meta_result = self.meta_model.fit_predict(meta_features, y)  # type: ignore
         
         logger.info(f"Meta model trained with RMSE: {meta_result.score:.4f}")
         

@@ -16,16 +16,20 @@ Log level : INFO
 from __future__ import annotations
 
 import sys
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
+
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from config import (
+from utils.config import (
     Config, DatabaseManager, setup_logging, 
     log_step, log_success, log_error, 
     validate_dataframe, create_parser, save_artifacts

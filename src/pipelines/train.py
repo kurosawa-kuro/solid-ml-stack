@@ -3,21 +3,28 @@ import numpy as np
 import pandas as pd
 import sys
 import os
+from pathlib import Path
 
-# パスを追加してモジュールをインポート可能にする
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from base import load_data
-from model_factory import model_factory
+from utils.base import load_data  # type: ignore
+from models.model_factory import model_factory  # type: ignore
 import csv
 from datetime import datetime
 
-RESULTS_FILE = "ml_results.csv"
+# プロジェクトルートを取得
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+RESULTS_FILE = ARTIFACTS_DIR / "ml_results.csv"
 
 
 def save_result(model_name, rmse, mae=None, r2=None):
+    # artifactsディレクトリが存在しない場合は作成
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_exists = os.path.isfile(RESULTS_FILE)
+    file_exists = RESULTS_FILE.exists()
     
     with open(RESULTS_FILE, mode="a", newline="") as f:
         writer = csv.writer(f)
@@ -50,19 +57,27 @@ def main():
     model = model_factory.create_model(args.model)
     result = model.fit_predict(X, y)
     
-    score = result.score
-    y_pred = result.y_pred
-
-    # 全評価指標を計算
-    metrics = model.calculate_all_metrics(y, y_pred)
+    # 評価指標計算
+    metrics = model.calculate_all_metrics(y, result.y_pred)
     
+    # 結果表示
     print(f"Model: {args.model}")
     print(f"RMSE: {metrics['rmse']:.4f}")
     print(f"MAE:  {metrics['mae']:.4f}")
     print(f"R²:   {metrics['r2']:.4f}")
-    y_pred_arr = np.asarray(y_pred).flatten()
-    print(f"Predictions (first 5): {y_pred_arr[:5]}")
-
+    print(f"Predictions (first 5): {result.y_pred[:5]}")
+    
+    # 特徴量重要度を表示（XGBoost、CatBoost、LightGBMの場合）
+    if args.model in ['xgb', 'cat', 'lgbm']:
+        try:
+            importance = model.get_feature_importance()
+            if importance:
+                print(f"\nTop 5 Feature Importance:")
+                for i, (feature, imp) in enumerate(list(importance.items())[:5]):
+                    print(f"  {i+1}. {feature}: {imp:.4f}")
+        except Exception as e:
+            print(f"Feature importance not available: {e}")
+    
     # 結果を保存
     save_result(args.model, float(metrics['rmse']), float(metrics['mae']), float(metrics['r2']))
 

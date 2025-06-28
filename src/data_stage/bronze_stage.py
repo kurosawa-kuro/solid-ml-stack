@@ -16,11 +16,15 @@ Log level : INFO
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
+
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import polars as pl
 
-from config import (
+from utils.config import (
     Config, DatabaseManager, setup_logging, 
     log_step, log_success, log_error, 
     validate_dataframe, create_parser

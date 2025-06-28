@@ -1,11 +1,19 @@
 import csv
 from collections import defaultdict
+from pathlib import Path
 
-RESULTS_FILE = "ml_results.csv"
+# プロジェクトルートを取得
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+RESULTS_FILE = ARTIFACTS_DIR / "ml_results.csv"
 
 # 最新の各モデルの結果を取得
 def get_latest_results():
     latest = {}
+    
+    if not RESULTS_FILE.exists():
+        return latest
+    
     with open(RESULTS_FILE, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
