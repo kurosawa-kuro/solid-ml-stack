@@ -1,31 +1,31 @@
 import sys
 import os
 
-# srcディレクトリとmodelsディレクトリをPYTHONPATHに追加
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.dirname(__file__))
 
-import lightgbm as lgb
+import xgboost as xgb
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional
-from base_model import BaseModel, ModelConfig
-from utils.config import LightGBMConfig
+from .base_model import BaseModel, ModelConfig
+from utils.config import XGBoostConfig
 from utils.base import set_seed
 
 
-class LightGBMModel(BaseModel):
-    """LightGBMモデルクラス"""
+class XGBoostModel(BaseModel):
+    """XGBoostモデルクラス"""
     
-    def __init__(self, config: Optional[ModelConfig] = None, lgbm_config: Optional[LightGBMConfig] = None):
+    def __init__(self, config: Optional[ModelConfig] = None, xgb_config: Optional[XGBoostConfig] = None):
         super().__init__(config)
-        self.lgbm_config = lgbm_config or LightGBMConfig()
+        self.xgb_config = xgb_config or XGBoostConfig()
     
     def get_model_name(self) -> str:
-        return "LightGBM"
+        return "XGBoost"
     
     def _train(self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]) -> Any:
-        """LightGBMモデルを学習"""
+        """XGBoostモデルを学習"""
         set_seed(self.config.seed)
         
         # --- データを確実に数値に変換 ---
@@ -46,30 +46,25 @@ class LightGBMModel(BaseModel):
             # 全ての列をfloat型に変換
             X = X_df.astype(float).values
         
-        # Dataset作成
-        dtrain = lgb.Dataset(X, label=y)
+        # DMatrix作成
+        dtrain = xgb.DMatrix(X, label=y)
         
         # パラメータ設定
         params = {
-            "objective": self.lgbm_config.objective,
+            "objective": self.xgb_config.objective,
             "seed": self.config.seed,
-            "max_depth": self.lgbm_config.max_depth,
-            "learning_rate": self.lgbm_config.learning_rate,
-            "subsample": self.lgbm_config.subsample,
-            "colsample_bytree": self.lgbm_config.colsample_bytree,
-            "verbosity": self.lgbm_config.verbosity,
-            "num_leaves": 31,
-            "min_child_samples": 20,
-            "reg_alpha": 0.0,
-            "reg_lambda": 0.0
+            "max_depth": self.xgb_config.max_depth,
+            "learning_rate": self.xgb_config.learning_rate,
+            "subsample": self.xgb_config.subsample,
+            "colsample_bytree": self.xgb_config.colsample_bytree
         }
         
         # モデル学習
-        model = lgb.train(params, dtrain, num_boost_round=self.lgbm_config.num_boost_round)
+        model = xgb.train(params, dtrain, num_boost_round=self.xgb_config.num_boost_round)
         return model
     
     def _predict(self, model: Any, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """LightGBMモデルで予測"""
+        """XGBoostモデルで予測"""
         # --- データを確実に数値に変換 ---
         if isinstance(X, pd.DataFrame):
             X = X.copy()  # 元データを変更しないようコピー
@@ -88,26 +83,13 @@ class LightGBMModel(BaseModel):
             # 全ての列をfloat型に変換
             X = X_df.astype(float).values
         
-        return model.predict(X)
+        dtest = xgb.DMatrix(X)
+        return model.predict(dtest)
     
-    def get_feature_importance(self, importance_type: str = "gain") -> dict:
+    def get_feature_importance(self) -> dict:
         """特徴量重要度を取得"""
         if not self.is_fitted or self.model is None:
             raise ValueError("Model is not fitted")
         
-        importance = self.model.feature_importance(importance_type=importance_type)
-        feature_names = self.model.feature_name()
-        
-        if feature_names is None:
-            feature_names = [f"feature_{i}" for i in range(len(importance))]
-        
-        importance_dict = dict(zip(feature_names, importance))
-        return dict(sorted(importance_dict.items(), key=lambda x: x[1], reverse=True))
-    
-    def get_feature_importance_split(self) -> dict:
-        """分割ベースの特徴量重要度を取得"""
-        return self.get_feature_importance(importance_type="split")
-    
-    def get_feature_importance_gain(self) -> dict:
-        """ゲインベースの特徴量重要度を取得"""
-        return self.get_feature_importance(importance_type="gain") 
+        importance = self.model.get_score(importance_type='gain')
+        return dict(sorted(importance.items(), key=lambda x: x[1], reverse=True)) 

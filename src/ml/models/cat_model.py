@@ -2,29 +2,30 @@ import sys
 import os
 
 # srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-import xgboost as xgb
+from catboost import CatBoostRegressor
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional
-from base_model import BaseModel, ModelConfig  # type: ignore
-from utils.config import XGBoostConfig  # type: ignore
-from utils.base import set_seed  # type: ignore
+from .base_model import BaseModel, ModelConfig
+from utils.config import CatBoostConfig
+from utils.base import set_seed
 
 
-class XGBoostModel(BaseModel):
-    """XGBoostモデルクラス"""
+class CatBoostModel(BaseModel):
+    """CatBoostモデルクラス"""
     
-    def __init__(self, config: Optional[ModelConfig] = None, xgb_config: Optional[XGBoostConfig] = None):
+    def __init__(self, config: Optional[ModelConfig] = None, cat_config: Optional[CatBoostConfig] = None):
         super().__init__(config)
-        self.xgb_config = xgb_config or XGBoostConfig()
+        self.cat_config = cat_config or CatBoostConfig()
     
     def get_model_name(self) -> str:
-        return "XGBoost"
+        return "CatBoost"
     
     def _train(self, X: Union[np.ndarray, pd.DataFrame], y: Union[np.ndarray, pd.Series]) -> Any:
-        """XGBoostモデルを学習"""
+        """CatBoostモデルを学習"""
         set_seed(self.config.seed)
         
         # --- データを確実に数値に変換 ---
@@ -45,25 +46,24 @@ class XGBoostModel(BaseModel):
             # 全ての列をfloat型に変換
             X = X_df.astype(float).values
         
-        # DMatrix作成
-        dtrain = xgb.DMatrix(X, label=y)
-        
         # パラメータ設定
         params = {
-            "objective": self.xgb_config.objective,
-            "seed": self.config.seed,
-            "max_depth": self.xgb_config.max_depth,
-            "learning_rate": self.xgb_config.learning_rate,
-            "subsample": self.xgb_config.subsample,
-            "colsample_bytree": self.xgb_config.colsample_bytree
+            "iterations": self.cat_config.iterations,
+            "depth": self.cat_config.depth,
+            "learning_rate": self.cat_config.learning_rate,
+            "loss_function": self.cat_config.loss_function,
+            "verbose": self.cat_config.verbose,
+            "random_seed": self.config.seed
         }
         
-        # モデル学習
-        model = xgb.train(params, dtrain, num_boost_round=self.xgb_config.num_boost_round)
+        # モデル作成と学習
+        model = CatBoostRegressor(**params)
+        model.fit(X, y)
+        
         return model
     
     def _predict(self, model: Any, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """XGBoostモデルで予測"""
+        """CatBoostモデルで予測"""
         # --- データを確実に数値に変換 ---
         if isinstance(X, pd.DataFrame):
             X = X.copy()  # 元データを変更しないようコピー
@@ -82,13 +82,32 @@ class XGBoostModel(BaseModel):
             # 全ての列をfloat型に変換
             X = X_df.astype(float).values
         
-        dtest = xgb.DMatrix(X)
-        return model.predict(dtest)
+        return model.predict(X)
     
     def get_feature_importance(self) -> dict:
         """特徴量重要度を取得"""
         if not self.is_fitted or self.model is None:
             raise ValueError("Model is not fitted")
         
-        importance = self.model.get_score(importance_type='gain')
-        return dict(sorted(importance.items(), key=lambda x: x[1], reverse=True)) 
+        importance = self.model.get_feature_importance()
+        feature_names = self.model.feature_names_
+        
+        if feature_names is None:
+            feature_names = [f"feature_{i}" for i in range(len(importance))]
+        
+        importance_dict = dict(zip(feature_names, importance))
+        return dict(sorted(importance_dict.items(), key=lambda x: x[1], reverse=True))
+    
+    def get_feature_importance_type(self, importance_type: str = "LossFunctionChange") -> dict:
+        """指定されたタイプの特徴量重要度を取得"""
+        if not self.is_fitted or self.model is None:
+            raise ValueError("Model is not fitted")
+        
+        importance = self.model.get_feature_importance(type=importance_type)
+        feature_names = self.model.feature_names_
+        
+        if feature_names is None:
+            feature_names = [f"feature_{i}" for i in range(len(importance))]
+        
+        importance_dict = dict(zip(feature_names, importance))
+        return dict(sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)) 

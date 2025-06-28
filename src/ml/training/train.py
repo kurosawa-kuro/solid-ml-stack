@@ -6,10 +6,10 @@ import os
 from pathlib import Path
 
 # srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from utils.base import load_data  # type: ignore
-from models.model_factory import model_factory  # type: ignore
+from ml.models.model_factory import model_factory  # type: ignore
 import csv
 from datetime import datetime
 

@@ -1,14 +1,17 @@
 import sys
 import os
+from typing import Optional
 
-# srcディレクトリとmodelsディレクトリをPYTHONPATHに追加
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.dirname(__file__))
 
-from xgb_model import XGBoostModel  # type: ignore
-from cat_model import CatBoostModel  # type: ignore
-from lgbm_model import LightGBMModel  # type: ignore
-from ensemble_model import EnsembleModel  # type: ignore
+from .base_model import BaseModel, ModelConfig
+from .xgb_model import XGBoostModel
+from .cat_model import CatBoostModel
+from .lgbm_model import LightGBMModel
+from .ensemble_model import EnsembleModel, StackingModel
+from utils.config import XGBoostConfig, CatBoostConfig, LightGBMConfig, EnsembleConfig
 
 class ModelFactory:
     """モデルファクトリークラス"""

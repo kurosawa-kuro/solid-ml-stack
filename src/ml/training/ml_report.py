@@ -10,10 +10,10 @@ from datetime import datetime
 import argparse
 
 # srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from utils.config import Config
-from models.model_factory import model_factory
+from ml.models.model_factory import model_factory
 
 
 def load_ml_results(config: Config) -> pd.DataFrame:

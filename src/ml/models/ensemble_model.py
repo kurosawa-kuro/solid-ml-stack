@@ -1,14 +1,14 @@
 import sys
 import os
 
-# srcディレクトリとmodelsディレクトリをPYTHONPATHに追加
+# srcディレクトリをPYTHONPATHに追加
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.dirname(__file__))
 
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional, Dict, List
-from base_model import BaseModel, ModelConfig, ModelResult
+from .base_model import BaseModel, ModelConfig, ModelResult
 from utils.config import EnsembleConfig
 import logging
 
@@ -32,7 +32,7 @@ class EnsembleModel(BaseModel):
         logger.info("Training ensemble model...")
         
         # 遅延インポートで循環インポートを回避
-        from model_factory import model_factory
+        from .model_factory import model_factory
         
         # 利用可能なモデルを取得（エンサンブルモデルを除外）
         available_models = model_factory.get_available_models()
@@ -144,7 +144,7 @@ class StackingModel(BaseModel):
         logger.info("Training stacking model...")
         
         # 遅延インポートで循環インポートを回避
-        from model_factory import model_factory
+        from .model_factory import model_factory
         
         # 利用可能なモデルを取得（エンサンブルモデルを除外）
         available_models = model_factory.get_available_models()
