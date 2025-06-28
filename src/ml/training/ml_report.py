@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import argparse
+import json
 
 # srcディレクトリをPYTHONPATHに追加
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -18,12 +19,27 @@ from ml.models.model_factory import model_factory
 
 def load_ml_results(config: Config) -> pd.DataFrame:
     """ML実験結果を読み込み"""
-    results_file = config.project_root / "artifacts" / "ml_results.csv"
+    metrics_file = config.project_root / "artifacts" / "metrics" / "metrics.json"
     
-    if results_file.exists():
-        return pd.read_csv(results_file)
+    if metrics_file.exists():
+        with open(metrics_file, 'r') as f:
+            metrics_data = json.load(f)
+        
+        # JSONデータをDataFrameに変換
+        rows = []
+        for model_name, runs in metrics_data.items():
+            for run in runs:
+                rows.append({
+                    'model': model_name,
+                    'rmse': run.get('rmse', 0),
+                    'mae': run.get('mae', None),
+                    'r2': run.get('r2', None),
+                    'timestamp': run.get('timestamp', '')
+                })
+        
+        return pd.DataFrame(rows)
     else:
-        print(f"Warning: {results_file} not found")
+        print(f"Warning: {metrics_file} not found")
         return pd.DataFrame()
 
 

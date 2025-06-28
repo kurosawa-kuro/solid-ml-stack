@@ -4,33 +4,84 @@ import pandas as pd
 import sys
 import os
 from pathlib import Path
+import json
+from datetime import datetime
+from typing import Optional
 
 # srcディレクトリをPYTHONPATHに追加
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from utils.base import load_data  # type: ignore
 from ml.models.model_factory import model_factory  # type: ignore
-import csv
-from datetime import datetime
 
-# プロジェクトルートを取得
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+# プロジェクトルートを取得（現在のディレクトリから相対的に取得）
+current_dir = Path.cwd()
+if (current_dir / "src").exists():
+    PROJECT_ROOT = current_dir
+else:
+    # src/ml/training/から実行された場合
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
-RESULTS_FILE = ARTIFACTS_DIR / "ml_results.csv"
+METRICS_DIR = ARTIFACTS_DIR / "metrics"
+METRICS_FILE = METRICS_DIR / "metrics.json"
 
 
-def save_result(model_name, rmse, mae=None, r2=None):
-    # artifactsディレクトリが存在しない場合は作成
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+def save_metrics(model_name: str, rmse: float, mae: Optional[float] = None, r2: Optional[float] = None):
+    """メトリクスをJSONファイルに保存"""
+    # 実験用サブフォルダを作成
+    timestamp = datetime.now()
+    experiment_name = timestamp.strftime("%Y%m%d_%H%M%S")
+    experiment_dir = ARTIFACTS_DIR / "experiments" / experiment_name
+    experiment_dir.mkdir(parents=True, exist_ok=True)
     
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_exists = RESULTS_FILE.exists()
+    # メトリクスを実験フォルダに保存
+    metrics_file = experiment_dir / "metrics.json"
     
-    with open(RESULTS_FILE, mode="a", newline="") as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(["timestamp", "model", "rmse", "mae", "r2"])
-        writer.writerow([now, model_name, rmse, mae or "", r2 or ""])
+    # 既存のメトリクスを読み込み
+    metrics_data = {}
+    if metrics_file.exists():
+        with open(metrics_file, 'r') as f:
+            metrics_data = json.load(f)
+    
+    # 新しいメトリクスを追加
+    if model_name not in metrics_data:
+        metrics_data[model_name] = []
+    
+    metrics_data[model_name].append({
+        "timestamp": timestamp.isoformat(),
+        "rmse": rmse,
+        "mae": mae,
+        "r2": r2
+    })
+    
+    # JSONファイルに保存
+    with open(metrics_file, 'w') as f:
+        json.dump(metrics_data, f, indent=2)
+    
+    # グローバルメトリクスファイルにも保存（履歴管理用）
+    global_metrics_dir = ARTIFACTS_DIR / "metrics"
+    global_metrics_dir.mkdir(parents=True, exist_ok=True)
+    global_metrics_file = global_metrics_dir / "metrics.json"
+    
+    global_metrics_data = {}
+    if global_metrics_file.exists():
+        with open(global_metrics_file, 'r') as f:
+            global_metrics_data = json.load(f)
+    
+    if model_name not in global_metrics_data:
+        global_metrics_data[model_name] = []
+    
+    global_metrics_data[model_name].append({
+        "timestamp": timestamp.isoformat(),
+        "rmse": rmse,
+        "mae": mae,
+        "r2": r2,
+        "experiment": experiment_name
+    })
+    
+    with open(global_metrics_file, 'w') as f:
+        json.dump(global_metrics_data, f, indent=2)
 
 
 def main():
@@ -79,7 +130,7 @@ def main():
             print(f"Feature importance not available: {e}")
     
     # 結果を保存
-    save_result(args.model, float(metrics['rmse']), float(metrics['mae']), float(metrics['r2']))
+    save_metrics(args.model, float(metrics['rmse']), float(metrics['mae']), float(metrics['r2']))
 
 if __name__ == "__main__":
     main() 
