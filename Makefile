@@ -1,6 +1,6 @@
 # Makefile for solid-ml-stack
 
-.PHONY: bronze silver gold pipeline status clean help
+.PHONY: bronze silver gold pipeline status clean help ml-xgb ml-cat ml-lgbm ml-ensemble ml-stack ml-all ml-help
 
 # Individual layer processing
 bronze:
@@ -71,3 +71,38 @@ test-gold:
 
 test-pipeline:
 	python3 src/pipeline.py --log-level INFO
+
+# MLモデル実行
+ML_DB ?= data/dwh/solid_ml.duckdb
+
+ml-xgb:
+	python3 src/ml/train.py --db $(ML_DB) --model xgb
+
+ml-cat:
+	python3 src/ml/train.py --db $(ML_DB) --model cat
+
+ml-lgbm:
+	python3 src/ml/train.py --db $(ML_DB) --model lgbm
+
+ml-ensemble:
+	python3 src/ml/train.py --db $(ML_DB) --model ensemble
+
+ml-stack:
+	python3 src/ml/train.py --db $(ML_DB) --model stack
+
+ml-all:
+	$(MAKE) ml-xgb
+	$(MAKE) ml-cat
+	$(MAKE) ml-lgbm
+	$(MAKE) ml-ensemble
+	$(MAKE) ml-stack
+	python3 src/ml/ml_report.py
+
+ml-help:
+	@echo "ML targets:"
+	@echo "  ml-xgb       - XGBoost モデルの学習・推論"
+	@echo "  ml-cat       - CatBoost モデルの学習・推論"
+	@echo "  ml-lgbm      - LightGBM モデルの学習・推論"
+	@echo "  ml-ensemble  - アンサンブル推論"
+	@echo "  ml-stack     - スタッキング推論"
+	@echo "  ml-all       - 全MLモデル一括実行"
