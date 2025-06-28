@@ -53,7 +53,8 @@ class CatBoostModel(BaseModel):
             "learning_rate": self.cat_config.learning_rate,
             "loss_function": self.cat_config.loss_function,
             "verbose": self.cat_config.verbose,
-            "random_seed": self.config.seed
+            "random_seed": self.config.seed,
+            "train_dir": self.cat_config.train_dir  # CatBoost情報の出力先を指定
         }
         
         # モデル作成と学習

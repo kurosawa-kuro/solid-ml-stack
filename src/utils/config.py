@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 import logging
 import sys
 from dataclasses import dataclass
+import os
 
 import duckdb
 import polars as pl
@@ -39,6 +40,11 @@ class CatBoostConfig:
     learning_rate: float = 0.1
     loss_function: str = "RMSE"
     verbose: bool = False
+    train_dir: Optional[str] = None  # 環境変数から取得、デフォルトはartifacts/catboost_info
+    
+    def __post_init__(self):
+        if self.train_dir is None:
+            self.train_dir = os.environ.get('CATBOOST_TRAIN_DIR', 'artifacts/catboost_info')
 
 
 @dataclass

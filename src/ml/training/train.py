@@ -93,6 +93,13 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
 
+    # CatBoostの出力先を環境変数で設定
+    catboost_train_dir = str(ARTIFACTS_DIR / "catboost_info")
+    os.environ['CATBOOST_TRAIN_DIR'] = catboost_train_dir
+    
+    # ディレクトリが存在しない場合は作成
+    Path(catboost_train_dir).mkdir(parents=True, exist_ok=True)
+
     X, y = load_data(args.db, args.table, args.target)
     
     # yをpd.Seriesに確実に変換
