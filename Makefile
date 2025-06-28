@@ -4,28 +4,28 @@
 
 # Individual layer processing
 bronze:
-	python3 src/pipeline.py --steps bronze
+	python3 src/pipelines/main.py --steps bronze
 
 silver:
-	python3 src/pipeline.py --steps silver
+	python3 src/pipelines/main.py --steps silver
 
 gold:
-	python3 src/pipeline.py --steps gold
+	python3 src/pipelines/main.py --steps gold
 
 # Complete pipeline execution
 pipeline:
-	python3 src/pipeline.py
+	python3 src/pipelines/main.py
 
 # Pipeline with specific steps
 bronze-silver:
-	python3 src/pipeline.py --steps bronze silver
+	python3 src/pipelines/main.py --steps bronze silver
 
 silver-gold:
-	python3 src/pipeline.py --steps silver gold
+	python3 src/pipelines/main.py --steps silver gold
 
 # Check pipeline status
 status:
-	python3 src/pipeline.py --status-only
+	python3 src/pipelines/main.py --status-only
 
 # Clean generated files
 clean:
@@ -70,7 +70,7 @@ test-gold:
 	python3 src/gold.py --log-level INFO
 
 test-pipeline:
-	python3 src/pipeline.py --log-level INFO
+	python3 src/pipelines/main.py --log-level INFO
 
 # MLモデル実行
 ML_DB ?= data/dwh/solid_ml.duckdb
@@ -99,7 +99,10 @@ ml-all:
 	$(MAKE) ml-lgbm
 	$(MAKE) ml-ensemble
 	$(MAKE) ml-stack
-	#	python3 src/ml/ml_report.py
+	python3 src/pipelines/ml_report.py
+
+ml-report:
+	python3 src/pipelines/ml_report.py
 
 ml-help:
 	@echo "ML targets:"
@@ -110,3 +113,4 @@ ml-help:
 	@echo "  ml-ensemble  - アンサンブル推論"
 	@echo "  ml-stack     - スタッキング推論"
 	@echo "  ml-all       - 全MLモデル一括実行"
+	@echo "  ml-report    - ML実験結果レポート生成"
