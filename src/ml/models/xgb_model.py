@@ -1,17 +1,14 @@
-import sys
-import os
-
-# srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-import xgboost as xgb
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import warnings
+warnings.filterwarnings('ignore')
+
 from .base_model import BaseModel, ModelConfig
-from utils.config import XGBoostConfig
-from utils.base import set_seed
+from src.utils.config import XGBoostConfig
+from src.utils.base import set_seed
 
 
 class XGBoostModel(BaseModel):

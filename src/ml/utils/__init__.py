@@ -1,8 +1,11 @@
 """
-ML Utilities module
+ML-specific utilities
 
-Contains utility functions for machine learning operations.
+This module contains utilities specific to machine learning operations:
+- Data preprocessing utilities
+- Model evaluation utilities
+- Feature engineering utilities
 """
 
-# Note: ml_report functionality moved to training module
+# ML-specific utilities can be added here
 __all__ = [] 

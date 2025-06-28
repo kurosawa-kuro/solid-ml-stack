@@ -1,17 +1,12 @@
-import sys
-import os
-from typing import Optional
-
-# srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from typing import Dict, Type, Optional
+import logging
 
 from .base_model import BaseModel, ModelConfig
 from .xgb_model import XGBoostModel
 from .cat_model import CatBoostModel
 from .lgbm_model import LightGBMModel
 from .ensemble_model import EnsembleModel, StackingModel
-from utils.config import XGBoostConfig, CatBoostConfig, LightGBMConfig, EnsembleConfig
+from src.utils.config import XGBoostConfig, CatBoostConfig, LightGBMConfig, EnsembleConfig
 
 class ModelFactory:
     """モデルファクトリークラス"""

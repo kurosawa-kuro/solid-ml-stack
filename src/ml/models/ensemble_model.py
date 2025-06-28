@@ -8,8 +8,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional, Dict, List
+import warnings
+warnings.filterwarnings('ignore')
+
+from sklearn.ensemble import VotingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 from .base_model import BaseModel, ModelConfig, ModelResult
-from utils.config import EnsembleConfig
+from src.utils.config import EnsembleConfig
 import logging
 
 logger = logging.getLogger(__name__)

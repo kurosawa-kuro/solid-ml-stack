@@ -1,17 +1,15 @@
-import sys
-import os
-
-# srcディレクトリをPYTHONPATHに追加
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from typing import Any, Union, Optional
+import warnings
+warnings.filterwarnings('ignore')
+
+import lightgbm as lgb
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 from .base_model import BaseModel, ModelConfig
-from utils.config import LightGBMConfig
-from utils.base import set_seed
+from src.utils.config import LightGBMConfig
+from src.utils.base import set_seed
 
 
 class LightGBMModel(BaseModel):
