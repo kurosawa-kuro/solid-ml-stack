@@ -1,195 +1,275 @@
-# ミニマル & ソリッド ML スタック  ― Kaggle 銅メダル専用
+# Solid ML Stack
 
-> **目的**: Kaggle コンペで銅メダルを "個人" で獲得する。そのために **環境構築に 1 秒も費やさず、特徴量設計・モデル改善に 100 % 集中** できる構成を示す。
+Solid ML Stackは、包括的な機械学習パイプラインを提供するPythonプロジェクトです。Bronze-Silver-Goldアーキテクチャに基づくデータ処理と、複数の機械学習アルゴリズム（XGBoost、CatBoost、LightGBM）を統合した本格的なMLプラットフォームです。
 
----
+## 🚀 特徴
 
-## 1. コンセプト（削ぎ落としの原則）
+- **データレイクアーキテクチャ**: Bronze（生データ）→ Silver（クリーニング）→ Gold（特徴量エンジニアリング）の3層構造
+- **高性能データ処理**: Polars、DuckDBを使用した高速データ処理
+- **多様なMLアルゴリズム**: XGBoost、CatBoost、LightGBM、アンサンブル学習をサポート
+- **実験管理**: MLflow統合による実験追跡と再現性の確保
+- **自動化**: Makefileによる簡単なコマンド実行
+- **型安全性**: 厳密なTypeScript型チェック（mypy）
 
-| やらない                       | 代わりに採用                         | 理由                   |
-| -------------------------- | ------------------------------ | -------------------- |
-| Docker / Poetry / Conda    | **グローバル pip** (WSL Ubuntu)     | 依存が少なく、セットアップが秒速で終わる |
-| ノートブック                     | **純 Python スクリプト + MLflow UI** | 実行順ズレ・セル副作用を排除し再現性◎  |
-| クラウド CI / GPU 移送           | **手元 GPU / CPU 全力回し**          | 単独参戦ではローカルが最速        |
-| 仮想環境 (pyenv / venv / pipx) | 必要になったら後付け                     | Kaggle だけなら衝突リスク小    |
-
----
-
-## 2. データ処理パイプライン
-
-### 2.1 パイプライン構造
+## 📁 プロジェクト構造
 
 ```
-Raw CSV → Bronze → Silver → Gold → ML Ready
-   ↓        ↓        ↓       ↓       ↓
-house_data.csv → raw_data → silver_house_data → gold_house_features → ft_house_ml
+solid-ml-stack/
+├── README.md                 # プロジェクト概要
+├── Makefile                  # ビルド自動化
+├── pyproject.toml           # プロジェクト設定
+├── requirements.txt         # 依存関係
+├── data/                    # データディレクトリ
+│   ├── raw/                # 生データ
+│   └── dwh/                # データウェアハウス（DuckDB）
+├── src/                     # ソースコード
+│   ├── data_stage/         # データ処理ステージ
+│   │   ├── bronze_stage.py # Bronze層処理
+│   │   ├── silver_stage.py # Silver層処理
+│   │   └── gold_stage.py   # Gold層処理
+│   ├── ml/                 # 機械学習モジュール
+│   │   ├── models/         # モデル定義
+│   │   ├── training/       # 学習パイプライン
+│   │   └── utils/          # MLユーティリティ
+│   ├── features/           # 特徴量エンジニアリング
+│   ├── pipelines/          # メインパイプライン
+│   └── utils/              # 共通ユーティリティ
+├── artifacts/              # 生成物（モデル、メトリクス）
+├── experiments/            # 実験結果
+├── tests/                  # テストスイート
+└── docs/                   # ドキュメント
 ```
 
-| レイヤ | 目的 | 主要処理 | 出力 |
-|--------|------|----------|------|
-| **Bronze** | 生データ取り込み | CSV読み込み、基本検証 | `raw_data` テーブル |
-| **Silver** | データクリーニング | 欠損処理、型変換、派生特徴量 | `silver_house_data` テーブル |
-| **Gold** | 特徴量エンジニアリング | 高度な特徴量作成、スコア計算 | `gold_house_features` テーブル |
+## 🛠️ セットアップ
 
-### 2.2 実行方法
+### 前提条件
+
+- Python 3.8以上
+- pip
+
+### インストール
 
 ```bash
+# リポジトリをクローン
+git clone <repository-url>
+cd solid-ml-stack
+
 # 開発環境セットアップ
 make dev-setup
 
-# 個別レイヤ実行
-make bronze      # Bronze layer only
-make silver      # Silver layer only  
-make gold        # Gold layer only
+# 依存関係インストール
+pip install -r requirements.txt
+```
 
-# パイプライン実行
-make pipeline    # Complete pipeline (bronze → silver → gold)
-make bronze-silver  # Bronze and silver only
-make silver-gold    # Silver and gold only
+## 🚀 クイックスタート
 
-# ステータス確認
-make status      # Check pipeline status
+### 1. データパイプライン実行
+
+```bash
+# 完全パイプライン実行（Bronze → Silver → Gold）
+make pipeline
+
+# 個別レイヤー実行
+make bronze    # Bronze層のみ
+make silver    # Silver層のみ
+make gold      # Gold層のみ
+
+# パイプライン状態確認
+make status
+```
+
+### 2. 機械学習モデル実行
+
+```bash
+# 個別モデル学習
+make ml-xgb    # XGBoost
+make ml-cat    # CatBoost
+make ml-lgbm   # LightGBM
+
+# アンサンブル学習
+make ml-ensemble  # アンサンブル推論
+make ml-stack     # スタッキング推論
+
+# 全モデル一括実行
+make ml-all
+
+# 実験結果レポート生成
+make ml-report
+```
+
+### 3. 開発・テスト
+
+```bash
+# コードフォーマット
+make lint
+
+# テスト実行
+make test
 
 # クリーンアップ
-make clean       # Remove generated files
+make clean
 ```
 
-### 2.3 詳細実行オプション
+## 📊 データパイプライン
+
+### Bronze層（生データ）
+- 生CSVデータの読み込み
+- 基本的なデータ検証
+- DuckDBへの格納
+
+### Silver層（データクリーニング）
+- データ型の正規化
+- 欠損値処理
+- 異常値検出・処理
+- データ品質チェック
+
+### Gold層（特徴量エンジニアリング）
+- 特徴量生成
+- 特徴量選択
+- スケーリング
+- モデル学習用データセット作成
+
+## 🤖 機械学習機能
+
+### サポートアルゴリズム
+- **XGBoost**: 勾配ブースティング決定木
+- **CatBoost**: カテゴリカル特徴量に強いブースティング
+- **LightGBM**: 高速な勾配ブースティング
+- **アンサンブル**: 複数モデルの組み合わせ
+- **スタッキング**: メタ学習による予測精度向上
+
+### 実験管理
+- MLflow統合による実験追跡
+- メトリクス自動保存（RMSE、MAE、R²）
+- 特徴量重要度分析
+- クロスバリデーション
+
+## 🔧 設定
+
+### 環境変数
+```bash
+# CatBoost学習ディレクトリ
+export CATBOOST_TRAIN_DIR=./artifacts/catboost_info
+
+# データベースパス
+export ML_DB=./data/dwh/solid_ml.duckdb
+```
+
+### 設定ファイル
+- `pyproject.toml`: プロジェクト設定、依存関係
+- `requirements.txt`: Python依存関係
+- `Makefile`: ビルド・実行コマンド
+
+## 📈 使用例
+
+### データパイプライン実行
+```python
+from src.pipelines.main import main
+from src.utils.config import Config
+
+# 設定
+config = Config(db_path="data/dwh/solid_ml.duckdb")
+logger = setup_logging("INFO")
+
+# パイプライン実行
+main(config, ["bronze", "silver", "gold"], logger)
+```
+
+### 機械学習モデル学習
+```python
+from src.ml.training.train import main
+
+# XGBoostモデル学習
+main([
+    "--db", "data/dwh/solid_ml.duckdb",
+    "--model", "xgb",
+    "--target", "price"
+])
+```
+
+## 🧪 テスト
 
 ```bash
-# カスタムデータベースパス
-python src/pipeline.py --db /path/to/custom.duckdb
+# 全テスト実行
+pytest
 
-# ログレベル指定
-python src/pipeline.py --log-level DEBUG
+# カバレッジ付きテスト
+pytest --cov=src --cov-report=html
 
-# 特定ステップのみ実行
-python src/pipeline.py --steps bronze silver
-
-# ステータス確認のみ
-python src/pipeline.py --status-only
+# 特定テスト実行
+pytest tests/test_bronze_stage.py
 ```
+
+## 📚 ドキュメント
+
+- [アーキテクチャ設計](docs/architecture.md): プロジェクト構造と設計原則
+- [TODO](docs/todo.md): 開発予定機能
+- [API仕様](docs/README.md): 詳細なAPIドキュメント
+
+## 🤝 開発ガイドライン
+
+### コーディング規約
+- **モジュール・変数・関数**: `snake_case`
+- **クラス**: `PascalCase`
+- **型ヒント**: 必須（mypy --strict対応）
+- **コメント**: 英語で記述
+
+### ブランチ戦略
+- `main`: 安定版・デプロイ対象
+- `dev`: 開発集約ブランチ
+- `feat/*`: 機能開発
+- `fix/*`: バグ修正
+
+### 品質保証
+- **lint**: black, flake8, mypy
+- **テスト**: pytest（カバレッジ90%以上）
+- **pre-commit**: コミット前自動チェック
+
+## 📊 パフォーマンス
+
+### データ処理性能
+- **Polars**: 高速なDataFrame処理
+- **DuckDB**: インメモリ分析データベース
+- **並列処理**: マルチコア活用
+
+### 機械学習性能
+- **XGBoost**: GPU対応
+- **CatBoost**: カテゴリカル特徴量最適化
+- **LightGBM**: メモリ効率的な学習
+
+## 🔒 セキュリティ
+
+- 入力データ検証
+- SQLインジェクション対策
+- 機密情報の環境変数管理
+- ログ出力の機密情報除外
+
+## 📄 ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。
+
+## 👥 コントリビューション
+
+1. フォークしてブランチを作成
+2. 機能開発・バグ修正
+3. テスト追加・実行
+4. プルリクエスト作成
+
+## 📞 サポート
+
+- **Issues**: GitHub Issuesでバグ報告・機能要望
+- **Discussions**: GitHub Discussionsで質問・議論
+- **Wiki**: 詳細な使用方法・トラブルシューティング
+
+## 🔄 更新履歴
+
+### v0.1.0 (2024-01-XX)
+- 初期リリース
+- Bronze-Silver-Goldデータパイプライン
+- XGBoost、CatBoost、LightGBM統合
+- MLflow実験管理
+- 基本的なMakefile自動化
 
 ---
 
-## 3. ミニマム・ツールセット & インストール
-
-| レイヤ       | ツール                           | 1 行インストール                                   | 概要                                   |
-| --------- | ----------------------------- | ------------------------------------------- | ------------------------------------ |
-| 実験管理      | **MLflow 2.x**                | `pip install mlflow`                        | 実行ログとモデルを自動保存。`mlflow ui` でブラウザ比較    |
-| ETL       | **polars**                    | `pip install polars[all]`                   | pandas の 3–10 倍速。lazy + streaming 対応 |
-| データベース   | **DuckDB**                    | `pip install duckdb`                        | 高速列指向DB。SQL で瞬時に集計              |
-| モデル       | LightGBM / CatBoost / XGBoost | `pip install lightgbm catboost xgboost`     | 汎用 Tabular GBDT 3 兄弟。GPU 切替自在        |
-| ハイパラ (任意) | Optuna                        | `pip install optuna[lightgbm]`              | 重み探索やパラメータ最適化に使用                     |
-| 可視化 (任意)  | Metabase                      | `docker run -p 3000:3000 metabase/metabase` | 投稿や社内共有用。コンペ序盤は不要                    |
-
-**セットアップ例 (WSL 上)**
-
-```bash
-# 事前にビルド系ライブラリを入れておくと失敗しにくい
-sudo apt update
-sudo apt install -y build-essential python3-dev libffi-dev libssl-dev \
-                    libblas-dev liblapack-dev gfortran
-
-# PEP 668 を回避して一括インストール
-python3 -m pip install --break-system-packages -U pip \
-  mlflow polars[all] duckdb lightgbm catboost xgboost \
-  optuna[lightgbm] scikit-learn
-
-# プロジェクトセットアップ
-make dev-setup
-```
-
----
-
-## 4. ワークフロー
-
-```bash
-# 0. 初回のみ
-make dev-setup
-
-# 1. データ処理パイプライン実行
-make pipeline                    # → data/dwh/solid_ml.duckdb に全レイヤ作成
-
-# 2. 単一 fold 学習
-make train F=0 S=42              # → mlruns/ にログ
-
-# 3. 5-fold 並列学習
-make kfold N=5 S=42
-
-# 4. ハイパラ探索（任意）
-make tuner TRIALS=50
-
-# 5. 推論 → 提出
-make predict RUN_IDS=<id1,id2,...>
-make submit C=<comp-name> S=42
-```
-
-**最低限の Makefile**
-
-```make
-# データ処理
-pipeline:
-	python3 src/pipeline.py
-
-# 学習
-train:
-	mlflow run . -P fold=$(F) -P seed=$(S)
-
-kfold:
-	for i in $(shell seq 0 $(N-1)); do \
-	  make train F=$$i S=$(S); \
-	done
-
-predict:
-	python predict.py $(RUN_IDS)
-
-submit:
-	kaggle competitions submit -c $(C) -f submission.csv -m "seed$(S)"
-```
-
----
-
-## 5. アンサンブル & スタッキング
-
-| レベル         | 手法                         | 所要時間   | 実装ポイント                              |
-| ----------- | -------------------------- | ------ | ----------------------------------- |
-| ① 平均/順位ブレンド | 加重平均 or rank 平均            | 10 分   | `polars` で 3 ファイル読み込み → 重み付け保存      |
-| ② 重み最適化     | Optuna で RMSE/AUC 最小化      | 30 分   | `study.optimize()` だけ。変数 2〜3 個なので高速 |
-| ③ スタッキング    | OOF 予測 → LGBM/LogReg メタモデル | 1–2 時間 | fold を揃える & OOF だけで学習することが鍵         |
-
-> **Tips**
->
-> * 相関を下げるために CatBoost は違う seed / GPU 設定で回すと効果大
-> * メタモデルは `max_depth<=2` に制限し過学習を防ぐ
-
----
-
-## 6. よくある質問 (FAQ)
-
-| 質問                  | 回答                                                                    |
-| ------------------- | --------------------------------------------------------------------- |
-| 依存パッケージが競合したら？      | Kaggle しか触らないなら無視。どうしても困れば `python -m venv .venv` で局所隔離               |
-| GPU が無い場合は？         | CatBoost/XGBoost を CPU 版に。LightGBM の `num_threads` を最適化すれば銅圏内まで行ける例多数 |
-| Notebook で可視化したくなった | `mlflow ui` + ブラウザで十分。どうしてもセル実行が必要な時だけ Jupyter を後付けインストール             |
-| 順位が伸び悩む             | ① 特徴量追加 → ② ハイパラ再調整 → ③ アンサンブル順に試すと効率的                                |
-| データ処理でエラーが出る         | `make status` でパイプライン状態確認。`make clean` でクリーンアップ後再実行                    |
-
----
-
-## 7. まとめ
-
-```text
-WSL (Ubuntu 標準 Python)
- ├── データ処理パイプライン (Bronze → Silver → Gold)
- ├── MLflow
- ├── polars + DuckDB
- ├── LightGBM / CatBoost / XGBoost
- ├── (Optuna)
- └── Bash / Makefile
-```
-
-*環境構築ゼロ* → *データ処理自動化* → *モデル改善に全力*。この構成でまず 1 コンペ完走し、
-詰まった箇所だけ局所的にツール追加すれば OK。さらに質問があれば気軽にどうぞ！
-
-
+**Solid ML Stack** - 堅牢で拡張可能な機械学習プラットフォーム
