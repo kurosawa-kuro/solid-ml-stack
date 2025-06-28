@@ -15,14 +15,15 @@ from datetime import datetime
 RESULTS_FILE = "ml_results.csv"
 
 
-def save_result(model_name, rmse):
+def save_result(model_name, rmse, mae=None, r2=None):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     file_exists = os.path.isfile(RESULTS_FILE)
+    
     with open(RESULTS_FILE, mode="a", newline="") as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["timestamp", "model", "rmse"])
-        writer.writerow([now, model_name, rmse])
+            writer.writerow(["timestamp", "model", "rmse", "mae", "r2"])
+        writer.writerow([now, model_name, rmse, mae or "", r2 or ""])
 
 
 def main():
@@ -52,13 +53,18 @@ def main():
     score = result.score
     y_pred = result.y_pred
 
+    # 全評価指標を計算
+    metrics = model.calculate_all_metrics(y, y_pred)
+    
     print(f"Model: {args.model}")
-    print(f"RMSE: {score:.4f}")
+    print(f"RMSE: {metrics['rmse']:.4f}")
+    print(f"MAE:  {metrics['mae']:.4f}")
+    print(f"R²:   {metrics['r2']:.4f}")
     y_pred_arr = np.asarray(y_pred).flatten()
     print(f"Predictions (first 5): {y_pred_arr[:5]}")
 
     # 結果を保存
-    save_result(args.model, float(score))
+    save_result(args.model, float(metrics['rmse']), float(metrics['mae']), float(metrics['r2']))
 
 if __name__ == "__main__":
     main() 

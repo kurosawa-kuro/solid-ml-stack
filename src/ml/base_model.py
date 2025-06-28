@@ -95,4 +95,14 @@ class BaseModel(ABC):
     def _calculate_score(self, y_true: Union[np.ndarray, pd.Series], y_pred: np.ndarray) -> float:
         """スコアを計算（RMSE）"""
         from base import rmse
-        return rmse(y_true, y_pred) 
+        return rmse(y_true, y_pred)
+    
+    def calculate_all_metrics(self, y_true: Union[np.ndarray, pd.Series], y_pred: np.ndarray) -> dict:
+        """全評価指標を計算"""
+        from base import rmse, mae, r2_score
+        
+        return {
+            'rmse': rmse(y_true, y_pred),
+            'mae': mae(y_true, y_pred),
+            'r2': r2_score(y_true, y_pred)
+        } 
