@@ -69,3 +69,4 @@ logs/
 
 
 data/dwh/solid_ml.duckdb
+/target/

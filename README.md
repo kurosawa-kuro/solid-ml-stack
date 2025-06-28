@@ -1,6 +1,6 @@
 # ミニマル & ソリッド ML スタック  ― Kaggle 銅メダル専用
 
-> **目的**: Kaggle コンペで銅メダルを “個人” で獲得する。そのために **環境構築に 1 秒も費やさず、特徴量設計・モデル改善に 100 % 集中** できる構成を示す。
+> **目的**: Kaggle コンペで銅メダルを "個人" で獲得する。そのために **環境構築に 1 秒も費やさず、特徴量設計・モデル改善に 100 % 集中** できる構成を示す。
 
 ---
 
@@ -15,20 +15,77 @@
 
 ---
 
-## 2. ミニマム・ツールセット & インストール
+## 2. データ処理パイプライン
+
+### 2.1 パイプライン構造
+
+```
+Raw CSV → Bronze → Silver → Gold → ML Ready
+   ↓        ↓        ↓       ↓       ↓
+house_data.csv → raw_data → silver_house_data → gold_house_features → ft_house_ml
+```
+
+| レイヤ | 目的 | 主要処理 | 出力 |
+|--------|------|----------|------|
+| **Bronze** | 生データ取り込み | CSV読み込み、基本検証 | `raw_data` テーブル |
+| **Silver** | データクリーニング | 欠損処理、型変換、派生特徴量 | `silver_house_data` テーブル |
+| **Gold** | 特徴量エンジニアリング | 高度な特徴量作成、スコア計算 | `gold_house_features` テーブル |
+
+### 2.2 実行方法
+
+```bash
+# 開発環境セットアップ
+make dev-setup
+
+# 個別レイヤ実行
+make bronze      # Bronze layer only
+make silver      # Silver layer only  
+make gold        # Gold layer only
+
+# パイプライン実行
+make pipeline    # Complete pipeline (bronze → silver → gold)
+make bronze-silver  # Bronze and silver only
+make silver-gold    # Silver and gold only
+
+# ステータス確認
+make status      # Check pipeline status
+
+# クリーンアップ
+make clean       # Remove generated files
+```
+
+### 2.3 詳細実行オプション
+
+```bash
+# カスタムデータベースパス
+python src/pipeline.py --db /path/to/custom.duckdb
+
+# ログレベル指定
+python src/pipeline.py --log-level DEBUG
+
+# 特定ステップのみ実行
+python src/pipeline.py --steps bronze silver
+
+# ステータス確認のみ
+python src/pipeline.py --status-only
+```
+
+---
+
+## 3. ミニマム・ツールセット & インストール
 
 | レイヤ       | ツール                           | 1 行インストール                                   | 概要                                   |
 | --------- | ----------------------------- | ------------------------------------------- | ------------------------------------ |
 | 実験管理      | **MLflow 2.x**                | `pip install mlflow`                        | 実行ログとモデルを自動保存。`mlflow ui` でブラウザ比較    |
 | ETL       | **polars**                    | `pip install polars[all]`                   | pandas の 3–10 倍速。lazy + streaming 対応 |
+| データベース   | **DuckDB**                    | `pip install duckdb`                        | 高速列指向DB。SQL で瞬時に集計              |
 | モデル       | LightGBM / CatBoost / XGBoost | `pip install lightgbm catboost xgboost`     | 汎用 Tabular GBDT 3 兄弟。GPU 切替自在        |
 | ハイパラ (任意) | Optuna                        | `pip install optuna[lightgbm]`              | 重み探索やパラメータ最適化に使用                     |
-| DB (任意)   | DuckDB                        | `pip install duckdb`                        | OOF 結合やメタ解析用。SQL で瞬時に集計              |
 | 可視化 (任意)  | Metabase                      | `docker run -p 3000:3000 metabase/metabase` | 投稿や社内共有用。コンペ序盤は不要                    |
 
 **セットアップ例 (WSL 上)**
 
-```
+```bash
 # 事前にビルド系ライブラリを入れておくと失敗しにくい
 sudo apt update
 sudo apt install -y build-essential python3-dev libffi-dev libssl-dev \
@@ -36,45 +93,34 @@ sudo apt install -y build-essential python3-dev libffi-dev libssl-dev \
 
 # PEP 668 を回避して一括インストール
 python3 -m pip install --break-system-packages -U pip \
-  mlflow polars[all] lightgbm catboost xgboost \
-  optuna[lightgbm] duckdb
-```
+  mlflow polars[all] duckdb lightgbm catboost xgboost \
+  optuna[lightgbm] scikit-learn
 
-```
-python3 - <<'PY'
-import importlib, pkg_resources, textwrap
-
-pkgs = [
-    "mlflow", "polars", "lightgbm", "catboost", "xgboost",
-    "optuna", "duckdb"
-]
-for p in pkgs:
-    try:
-        v = pkg_resources.get_distribution(p).version
-        print(f"{p:10}  {v}")
-    except Exception as e:
-        print(f"{p:10}  NOT FOUND ({e.__class__.__name__})")
-PY
+# プロジェクトセットアップ
+make dev-setup
 ```
 
 ---
 
-## 3. ワークフロー
+## 4. ワークフロー
 
 ```bash
 # 0. 初回のみ
-pip install -r requirements.txt  # 上記ツール一覧
+make dev-setup
 
-# 1. 単一 fold 学習
+# 1. データ処理パイプライン実行
+make pipeline                    # → data/dwh/solid_ml.duckdb に全レイヤ作成
+
+# 2. 単一 fold 学習
 make train F=0 S=42              # → mlruns/ にログ
 
-# 2. 5-fold 並列学習
+# 3. 5-fold 並列学習
 make kfold N=5 S=42
 
-# 3. ハイパラ探索（任意）
+# 4. ハイパラ探索（任意）
 make tuner TRIALS=50
 
-# 4. 推論 → 提出
+# 5. 推論 → 提出
 make predict RUN_IDS=<id1,id2,...>
 make submit C=<comp-name> S=42
 ```
@@ -82,6 +128,11 @@ make submit C=<comp-name> S=42
 **最低限の Makefile**
 
 ```make
+# データ処理
+pipeline:
+	python3 src/pipeline.py
+
+# 学習
 train:
 	mlflow run . -P fold=$(F) -P seed=$(S)
 
@@ -99,7 +150,7 @@ submit:
 
 ---
 
-## 4. アンサンブル & スタッキング
+## 5. アンサンブル & スタッキング
 
 | レベル         | 手法                         | 所要時間   | 実装ポイント                              |
 | ----------- | -------------------------- | ------ | ----------------------------------- |
@@ -114,7 +165,7 @@ submit:
 
 ---
 
-## 5. よくある質問 (FAQ)
+## 6. よくある質問 (FAQ)
 
 | 質問                  | 回答                                                                    |
 | ------------------- | --------------------------------------------------------------------- |
@@ -122,21 +173,23 @@ submit:
 | GPU が無い場合は？         | CatBoost/XGBoost を CPU 版に。LightGBM の `num_threads` を最適化すれば銅圏内まで行ける例多数 |
 | Notebook で可視化したくなった | `mlflow ui` + ブラウザで十分。どうしてもセル実行が必要な時だけ Jupyter を後付けインストール             |
 | 順位が伸び悩む             | ① 特徴量追加 → ② ハイパラ再調整 → ③ アンサンブル順に試すと効率的                                |
+| データ処理でエラーが出る         | `make status` でパイプライン状態確認。`make clean` でクリーンアップ後再実行                    |
 
 ---
 
-## 6. まとめ
+## 7. まとめ
 
 ```text
 WSL (Ubuntu 標準 Python)
+ ├── データ処理パイプライン (Bronze → Silver → Gold)
  ├── MLflow
- ├── polars
+ ├── polars + DuckDB
  ├── LightGBM / CatBoost / XGBoost
  ├── (Optuna)
  └── Bash / Makefile
 ```
 
-*環境構築ゼロ* → *モデル改善に全力*。この構成でまず 1 コンペ完走し、
+*環境構築ゼロ* → *データ処理自動化* → *モデル改善に全力*。この構成でまず 1 コンペ完走し、
 詰まった箇所だけ局所的にツール追加すれば OK。さらに質問があれば気軽にどうぞ！
 
 
