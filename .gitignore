@@ -72,3 +72,4 @@ data/dwh/solid_ml.duckdb
 /target/
 artifacts/ml_results.csv
 catboost_info/catboost_training.json
+artifacts/
