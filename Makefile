@@ -1,6 +1,6 @@
 # Makefile for solid-ml-stack
 
-.PHONY: bronze silver gold pipeline status clean help ml-xgb ml-cat ml-lgbm ml-ensemble ml-stack ml-all ml-help
+.PHONY: bronze silver gold pipeline status clean help ml-xgb ml-cat ml-lgbm ml-ensemble ml-stack ml-all ml-help kaggle-cv kaggle-submission kaggle-help
 
 # Individual layer processing
 bronze:
@@ -57,6 +57,8 @@ help:
 	@echo "  clean         - Remove generated files"
 	@echo "  dev-setup     - Setup development environment"
 	@echo "  test-*        - Quick test individual layers"
+	@echo "  ml-help       - Show ML-specific help"
+	@echo "  kaggle-help   - Show Kaggle competition help"
 	@echo "  help          - Show this help message"
 
 # Quick test targets
@@ -114,3 +116,24 @@ ml-help:
 	@echo "  ml-stack     - スタッキング推論"
 	@echo "  ml-all       - 全MLモデル一括実行"
 	@echo "  ml-report    - ML実験結果レポート生成"
+
+# Kaggle competition targets
+kaggle-cv:
+	python3 -m src.kaggle.main cv --db $(ML_DB) --models xgb cat lgbm --cv-type kfold --n-splits 5
+
+kaggle-cv-all:
+	python3 -m src.kaggle.main cv --db $(ML_DB) --models xgb cat lgbm --cv-type kfold --n-splits 5
+
+kaggle-submission:
+	python3 -m src.kaggle.main submission --db $(ML_DB) --test-data data/test.csv --models xgb cat lgbm
+
+kaggle-submission-all:
+	python3 -m src.kaggle.main submission --db $(ML_DB) --test-data data/test.csv --models xgb cat lgbm --ensemble-methods average bayesian stacking
+
+kaggle-help:
+	@echo "Kaggle competition targets:"
+	@echo "  kaggle-cv           - Run cross-validation for Kaggle models"
+	@echo "  kaggle-cv-all       - Run comprehensive CV evaluation"
+	@echo "  kaggle-submission   - Generate basic submission files"
+	@echo "  kaggle-submission-all - Generate all submission files with ensembles"
+	@echo "  kaggle-help         - Show Kaggle-specific help"
