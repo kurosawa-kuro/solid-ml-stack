@@ -1,275 +1,292 @@
 # Solid ML Stack
 
-Solid ML Stackは、包括的な機械学習パイプラインを提供するPythonプロジェクトです。Bronze-Silver-Goldアーキテクチャに基づくデータ処理と、複数の機械学習アルゴリズム（XGBoost、CatBoost、LightGBM）を統合した本格的なMLプラットフォームです。
+高速でスケーラブルなKaggle特化機械学習パイプライン
 
-## 🚀 特徴
+## 特徴
 
-- **データレイクアーキテクチャ**: Bronze（生データ）→ Silver（クリーニング）→ Gold（特徴量エンジニアリング）の3層構造
-- **高性能データ処理**: Polars、DuckDBを使用した高速データ処理
-- **多様なMLアルゴリズム**: XGBoost、CatBoost、LightGBM、アンサンブル学習をサポート
-- **実験管理**: MLflow統合による実験追跡と再現性の確保
-- **自動化**: Makefileによる簡単なコマンド実行
-- **型安全性**: 厳密なTypeScript型チェック（mypy）
+### 🎯 Kaggle最適化
+- **コンペ提出までのワークフロー最適化**: 前処理→特徴量エンジニアリング→モデル学習→アンサンブル→提出の一連のフローを自動化
+- **再利用可能な設計**: 関数・クラスベースで構成し、異なるコンペでも簡単に再利用可能
+- **CPU特化**: XGBoost/LightGBM/CatBoostなどツリーベースモデルを中心とした高速学習
 
-## 📁 プロジェクト構造
+### 🔧 モジュール化設計
+- **前処理**: 欠損値処理、外れ値除去、スケーリング、エンコーディング
+- **特徴量エンジニアリング**: 数値変換、カテゴリエンコーディング、交互作用特徴量、時系列特徴量
+- **モデル学習**: XGBoost、LightGBM、CatBoost、線形モデル
+- **パラメータ探索**: Grid Search、Random Search、Bayesian Optimization、Optuna
+- **アンサンブル**: 平均化、重み付き平均、スタッキング、Voting
 
-```
-solid-ml-stack/
-├── README.md                 # プロジェクト概要
-├── Makefile                  # ビルド自動化
-├── pyproject.toml           # プロジェクト設定
-├── requirements.txt         # 依存関係
-├── data/                    # データディレクトリ
-│   ├── raw/                # 生データ
-│   └── dwh/                # データウェアハウス（DuckDB）
-├── src/                     # ソースコード
-│   ├── data_stage/         # データ処理ステージ
-│   │   ├── bronze_stage.py # Bronze層処理
-│   │   ├── silver_stage.py # Silver層処理
-│   │   └── gold_stage.py   # Gold層処理
-│   ├── ml/                 # 機械学習モジュール
-│   │   ├── models/         # モデル定義
-│   │   ├── training/       # 学習パイプライン
-│   │   └── utils/          # MLユーティリティ
-│   ├── features/           # 特徴量エンジニアリング
-│   ├── pipelines/          # メインパイプライン
-│   └── utils/              # 共通ユーティリティ
-├── artifacts/              # 生成物（モデル、メトリクス）
-├── experiments/            # 実験結果
-├── tests/                  # テストスイート
-└── docs/                   # ドキュメント
-```
+### 📊 タブラーデータ特化
+- CSVなどの表形式データに特化
+- pandas→scikit-learnパイプラインベース
+- 画像・テキスト・時系列Deep Learningは対象外
 
-## 🛠️ セットアップ
-
-### 前提条件
-
-- Python 3.8以上
-- pip
-
-### インストール
+## インストール
 
 ```bash
-# リポジトリをクローン
-git clone <repository-url>
-cd solid-ml-stack
+# 基本依存関係
+pip install -e .
 
-# 開発環境セットアップ
-make dev-setup
+# 最適化ライブラリ（オプション）
+pip install -e .[optimization]
 
-# 依存関係インストール
-pip install -r requirements.txt
+# 可視化ライブラリ（オプション）
+pip install -e .[visualization]
+
+# 開発用ツール
+pip install -e .[dev]
 ```
 
-## 🚀 クイックスタート
+## クイックスタート
 
-### 1. データパイプライン実行
+### 基本的な使い方
 
-```bash
-# 完全パイプライン実行（Bronze → Silver → Gold）
-make pipeline
-
-# 個別レイヤー実行
-make bronze    # Bronze層のみ
-make silver    # Silver層のみ
-make gold      # Gold層のみ
-
-# パイプライン状態確認
-make status
-```
-
-### 2. 機械学習モデル実行
-
-```bash
-# 個別モデル学習
-make ml-xgb    # XGBoost
-make ml-cat    # CatBoost
-make ml-lgbm   # LightGBM
-
-# アンサンブル学習
-make ml-ensemble  # アンサンブル推論
-make ml-stack     # スタッキング推論
-
-# 全モデル一括実行
-make ml-all
-
-# 実験結果レポート生成
-make ml-report
-```
-
-### 3. 開発・テスト
-
-```bash
-# コードフォーマット
-make lint
-
-# テスト実行
-make test
-
-# クリーンアップ
-make clean
-```
-
-## 📊 データパイプライン
-
-### Bronze層（生データ）
-- 生CSVデータの読み込み
-- 基本的なデータ検証
-- DuckDBへの格納
-
-### Silver層（データクリーニング）
-- データ型の正規化
-- 欠損値処理
-- 異常値検出・処理
-- データ品質チェック
-
-### Gold層（特徴量エンジニアリング）
-- 特徴量生成
-- 特徴量選択
-- スケーリング
-- モデル学習用データセット作成
-
-## 🤖 機械学習機能
-
-### サポートアルゴリズム
-- **XGBoost**: 勾配ブースティング決定木
-- **CatBoost**: カテゴリカル特徴量に強いブースティング
-- **LightGBM**: 高速な勾配ブースティング
-- **アンサンブル**: 複数モデルの組み合わせ
-- **スタッキング**: メタ学習による予測精度向上
-
-### 実験管理
-- MLflow統合による実験追跡
-- メトリクス自動保存（RMSE、MAE、R²）
-- 特徴量重要度分析
-- クロスバリデーション
-
-## 🔧 設定
-
-### 環境変数
-```bash
-# CatBoost学習ディレクトリ
-export CATBOOST_TRAIN_DIR=./artifacts/catboost_info
-
-# データベースパス
-export ML_DB=./data/dwh/solid_ml.duckdb
-```
-
-### 設定ファイル
-- `pyproject.toml`: プロジェクト設定、依存関係
-- `requirements.txt`: Python依存関係
-- `Makefile`: ビルド・実行コマンド
-
-## 📈 使用例
-
-### データパイプライン実行
 ```python
-from src.pipelines.main import main
-from src.utils.config import Config
+import pandas as pd
+from preprocessing import Preprocessor
+from features.engineering import AutoFeatureEngineer
+from modeling import ModelFactory
+from submission import SubmissionGenerator
 
-# 設定
-config = Config(db_path="data/dwh/solid_ml.duckdb")
-logger = setup_logging("INFO")
+# データ読み込み
+train_df = pd.read_csv('train.csv')
+test_df = pd.read_csv('test.csv')
 
-# パイプライン実行
-main(config, ["bronze", "silver", "gold"], logger)
+# 前処理
+preprocessor = Preprocessor()
+X_train, X_val, y_train, y_val = preprocessor.prepare_data(train_df, 'target')
+X_train_processed, X_val_processed = preprocessor.process_train_test(X_train, X_val, y_train)
+
+# 特徴量エンジニアリング
+feature_engineer = AutoFeatureEngineer()
+X_train_features = feature_engineer.fit_transform(X_train_processed, y_train)
+X_val_features = feature_engineer.pipeline.transform(X_val_processed)
+
+# モデル学習
+factory = ModelFactory()
+models = factory.get_default_models(target_type='regression')
+
+trained_models = {}
+for model in models:
+    model.fit(X_train_features, y_train, X_val_features, y_val)
+    trained_models[model.config.name] = model
+
+# 予測・提出ファイル生成
+X_test_processed = preprocessor.transform(test_df.drop(columns=['id']))
+X_test_features = feature_engineer.pipeline.transform(X_test_processed)
+
+predictions = {name: model.predict(X_test_features) 
+               for name, model in trained_models.items()}
+
+submission_gen = SubmissionGenerator()
+submission_path = submission_gen.create_ensemble_submission(
+    predictions, test_df['id'].values, 'target', 'id'
+)
 ```
 
-### 機械学習モデル学習
+### コマンドライン実行
+
+```bash
+# フルワークフロー実行
+python scripts/kaggle_workflow.py \
+    --train-path data/raw/train.csv \
+    --test-path data/raw/test.csv \
+    --target-col target \
+    --problem-type regression \
+    --optimize \
+    --ensemble
+
+# Makefileを使った実行
+make kaggle-regression TRAIN=data/raw/train.csv TEST=data/raw/test.csv TARGET=target
+make kaggle-classification TRAIN=data/raw/train.csv TEST=data/raw/test.csv TARGET=class
+```
+
+## プロジェクト構造
+
+```
+src/
+├── preprocessing/          # 前処理モジュール
+│   ├── preprocessor.py    # メイン前処理クラス
+│   ├── pipeline.py        # 前処理パイプライン
+│   └── transformers.py    # 個別変換器
+├── features/              # 特徴量エンジニアリング
+│   └── engineering/       # 特徴量生成
+│       ├── base.py        # ベース特徴量生成器
+│       ├── numeric.py     # 数値特徴量
+│       ├── categorical.py # カテゴリ特徴量
+│       ├── interaction.py # 交互作用特徴量
+│       ├── datetime.py    # 日時特徴量
+│       ├── aggregation.py # 集約特徴量
+│       └── pipeline.py    # 特徴量パイプライン
+├── modeling/              # モデル学習
+│   ├── base.py           # ベースモデル
+│   ├── tree_models.py    # ツリーモデル（XGBoost、LightGBM、CatBoost）
+│   ├── linear_models.py  # 線形モデル
+│   ├── ensemble.py       # アンサンブル手法
+│   └── factory.py        # モデルファクトリ
+├── optimization/          # パラメータ探索
+│   ├── base.py           # ベース最適化クラス
+│   ├── grid_search.py    # グリッドサーチ
+│   ├── random_search.py  # ランダムサーチ
+│   ├── bayesian_optimization.py # ベイジアン最適化
+│   ├── optuna_optimizer.py # Optuna最適化
+│   └── factory.py        # 最適化ファクトリ
+├── evaluation/           # モデル評価
+│   └── metrics.py        # 評価指標
+├── submission/           # 提出ファイル生成
+│   └── submission_generator.py
+└── utils/                # ユーティリティ
+    ├── base.py           # ベースユーティリティ
+    ├── config.py         # 設定管理
+    └── io.py             # ファイル入出力
+```
+
+## 使用例
+
+### 1. カスタム前処理パイプライン
+
 ```python
-from src.ml.training.train import main
+from preprocessing import PreprocessingPipeline
+from preprocessing.transformers import *
 
-# XGBoostモデル学習
-main([
-    "--db", "data/dwh/solid_ml.duckdb",
-    "--model", "xgb",
-    "--target", "price"
-])
+# カスタム前処理パイプライン
+pipeline = PreprocessingPipeline()
+pipeline.add_step('missing', MissingValueHandler(numeric_strategy='median'))
+pipeline.add_step('outliers', OutlierHandler(method='zscore', threshold=3))
+pipeline.add_step('encoding', CategoricalEncoder(method='target'))
+pipeline.add_step('scaling', NumericScaler(method='robust'))
+
+X_processed = pipeline.fit_transform(X_train, y_train)
 ```
 
-## 🧪 テスト
+### 2. 特徴量エンジニアリング
+
+```python
+from features.engineering import FeatureEngineeringPipeline
+
+# 特徴量パイプライン構築
+fe_pipeline = FeatureEngineeringPipeline()
+fe_pipeline.add_numeric_features(['log', 'sqrt', 'square'])
+fe_pipeline.add_categorical_features(min_frequency=5)
+fe_pipeline.add_interaction_features(max_interactions=100)
+fe_pipeline.add_polynomial_features(degree=2)
+
+X_features = fe_pipeline.fit_transform(X_train, y_train)
+```
+
+### 3. パラメータ最適化
+
+```python
+from optimization import OptunaOptimizer, OptimizationConfig
+
+# Optuna最適化
+search_space = {
+    'n_estimators': {'type': 'int', 'low': 100, 'high': 1000},
+    'max_depth': {'type': 'int', 'low': 3, 'high': 10},
+    'learning_rate': {'type': 'loguniform', 'low': 0.01, 'high': 0.3}
+}
+
+config = OptimizationConfig(search_space=search_space, n_trials=100)
+optimizer = OptunaOptimizer(config)
+
+result = optimizer.optimize(model, X_train, y_train, X_val, y_val)
+best_model = result.apply_best_params()
+```
+
+### 4. アンサンブル
+
+```python
+from modeling import StackingEnsemble, create_kaggle_models
+
+# 多様なモデル作成
+models = create_kaggle_models(target_type='regression')
+
+# スタッキングアンサンブル
+stacking_model = StackingEnsemble(base_models=models, cv_folds=5)
+stacking_model.fit(X_train, y_train, X_val, y_val)
+
+predictions = stacking_model.predict(X_test)
+```
+
+## コンフィグ設定
+
+```python
+from config.kaggle_config import KaggleConfig, ConfigPresets
+
+# 回帰問題用設定
+config = ConfigPresets.regression_competition()
+
+# 分類問題用設定
+config = ConfigPresets.classification_competition()
+
+# カスタム設定
+config = KaggleConfig(
+    problem_type='regression',
+    preprocessing={
+        'handle_missing': True,
+        'handle_outliers': True,
+        'outlier_threshold': 2.0
+    },
+    feature_engineering={
+        'numeric_features': True,
+        'polynomial_features': True,
+        'max_interactions': 150
+    }
+)
+```
+
+## テスト実行
 
 ```bash
 # 全テスト実行
-pytest
+make test
+
+# 高速テスト（slowマーカーを除外）
+make test-fast
+
+# ユニットテストのみ
+make test-unit
+
+# 統合テストのみ
+make test-integration
 
 # カバレッジ付きテスト
-pytest --cov=src --cov-report=html
+make test-coverage
 
-# 特定テスト実行
-pytest tests/test_bronze_stage.py
+# スモークテスト
+make test-smoke
 ```
 
-## 📚 ドキュメント
+## 開発ガイドライン
 
-- [アーキテクチャ設計](docs/architecture.md): プロジェクト構造と設計原則
-- [TODO](docs/todo.md): 開発予定機能
-- [API仕様](docs/README.md): 詳細なAPIドキュメント
+### コード品質
+- **型ヒント**: 全ての関数・メソッドに型アノテーション
+- **docstring**: 主要クラス・関数にGoogleスタイルドキュメント
+- **テスト**: pytestによる単体テスト
+- **フォーマット**: blackによる自動フォーマット
 
-## 🤝 開発ガイドライン
+### パフォーマンス
+- **CPU最適化**: GPU不要でローカル環境で高速実行
+- **メモリ効率**: 大容量データでもメモリ効率的に処理
+- **並列処理**: 可能な箇所での並列化実装
 
-### コーディング規約
-- **モジュール・変数・関数**: `snake_case`
-- **クラス**: `PascalCase`
-- **型ヒント**: 必須（mypy --strict対応）
-- **コメント**: 英語で記述
+### セキュリティ
+- **秘匿情報**: API キーや認証情報のハードコード禁止
+- **入力検証**: 外部データの適切な検証・サニタイズ
 
-### ブランチ戦略
-- `main`: 安定版・デプロイ対象
-- `dev`: 開発集約ブランチ
-- `feat/*`: 機能開発
-- `fix/*`: バグ修正
+## ライセンス
 
-### 品質保証
-- **lint**: black, flake8, mypy
-- **テスト**: pytest（カバレッジ90%以上）
-- **pre-commit**: コミット前自動チェック
+MIT License
 
-## 📊 パフォーマンス
+## 貢献
 
-### データ処理性能
-- **Polars**: 高速なDataFrame処理
-- **DuckDB**: インメモリ分析データベース
-- **並列処理**: マルチコア活用
+1. リポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. Pull Requestを作成
 
-### 機械学習性能
-- **XGBoost**: GPU対応
-- **CatBoost**: カテゴリカル特徴量最適化
-- **LightGBM**: メモリ効率的な学習
+## サポート
 
-## 🔒 セキュリティ
-
-- 入力データ検証
-- SQLインジェクション対策
-- 機密情報の環境変数管理
-- ログ出力の機密情報除外
-
-## 📄 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。
-
-## 👥 コントリビューション
-
-1. フォークしてブランチを作成
-2. 機能開発・バグ修正
-3. テスト追加・実行
-4. プルリクエスト作成
-
-## 📞 サポート
-
-- **Issues**: GitHub Issuesでバグ報告・機能要望
-- **Discussions**: GitHub Discussionsで質問・議論
-- **Wiki**: 詳細な使用方法・トラブルシューティング
-
-## 🔄 更新履歴
-
-### v0.1.0 (2024-01-XX)
-- 初期リリース
-- Bronze-Silver-Goldデータパイプライン
-- XGBoost、CatBoost、LightGBM統合
-- MLflow実験管理
-- 基本的なMakefile自動化
-
----
-
-**Solid ML Stack** - 堅牢で拡張可能な機械学習プラットフォーム
+- Issues: GitHub Issues で質問・バグ報告
+- Discussions: GitHub Discussions で一般的な議論

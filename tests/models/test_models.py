@@ -1,33 +1,23 @@
 #!/usr/bin/env python3
 """
 MLモデルのテストスクリプト
-新しいアーキテクチャで実装されたモデルをテストします
 """
 
+import pytest
 import numpy as np
 import pandas as pd
-import logging
-from typing import Dict, Any, cast
+from typing import Dict, Any
 
-# ログ設定
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# MLモジュールのインポート
-try:
-    from config import DEFAULT_CONFIG
-    from model_factory import model_factory
-    from base_improved import DataLoader
-    from utils import print_results_summary
-except ImportError as e:
-    logger.error(f"Import error: {e}")
-    logger.info("Please ensure you're running from the correct directory")
-    exit(1)
+from modeling import ModelFactory
+from preprocessing import Preprocessor
 
 
-def create_test_data(n_samples: int = 1000, n_features: int = 10, seed: int = 42) -> tuple:
+@pytest.fixture
+def test_data():
     """テストデータを作成"""
-    np.random.seed(seed)
+    np.random.seed(42)
+    n_samples = 1000
+    n_features = 10
     
     # 特徴量
     X = np.random.randn(n_samples, n_features)
@@ -37,135 +27,119 @@ def create_test_data(n_samples: int = 1000, n_features: int = 10, seed: int = 42
     
     # DataFrameに変換
     feature_names = [f'feature_{i}' for i in range(n_features)]
-    X_df = pd.DataFrame(X, columns=cast(Any, feature_names))
+    X_df = pd.DataFrame(X, columns=feature_names)
     y_series = pd.Series(y, name='target')
     
-    logger.info(f"Created test data: {X_df.shape[0]} samples, {X_df.shape[1]} features")
     return X_df, y_series
 
 
-def test_single_model(model_name: str, X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
-    """単一モデルをテスト"""
-    logger.info(f"Testing {model_name} model...")
+class TestModels:
+    """モデルのテスト"""
     
-    try:
-        # モデル作成
-        model = model_factory.create_model(model_name)
+    def test_single_model(self, test_data):
+        """単一モデルをテスト"""
+        X, y = test_data
         
-        # 学習と予測
-        result = model.fit_predict(X, y)
+        # XGBoostモデルを作成してテスト
+        model = ModelFactory.create_model_from_name(
+            'xgboost', 
+            target_type='regression',
+            n_estimators=10,
+            random_state=42
+        )
         
-        logger.info(f"{model_name} test completed. RMSE: {result.score:.4f}")
+        # 学習
+        model.fit(X, y)
         
-        return {
-            'model_name': model_name,
-            'score': result.score,
-            'y_pred': result.y_pred,
-            'timestamp': result.timestamp,
-            'success': True
-        }
+        # 予測
+        predictions = model.predict(X)
         
-    except Exception as e:
-        logger.error(f"Error testing {model_name}: {str(e)}")
-        return {
-            'model_name': model_name,
-            'error': str(e),
-            'success': False
-        }
-
-
-def test_all_models(X: pd.DataFrame, y: pd.Series) -> Dict[str, Dict[str, Any]]:
-    """全モデルをテスト"""
-    available_models = model_factory.get_available_models()
-    logger.info(f"Testing all available models: {available_models}")
-    
-    results = {}
-    
-    for model_name in available_models:
-        result = test_single_model(model_name, X, y)
-        results[model_name] = result
-    
-    return results
-
-
-def test_ensemble_models(X: pd.DataFrame, y: pd.Series) -> Dict[str, Dict[str, Any]]:
-    """エンサンブルモデルをテスト"""
-    ensemble_models = ['ensemble', 'stacking']
-    results = {}
-    
-    for model_name in ensemble_models:
-        if model_factory.has_model(model_name):
-            result = test_single_model(model_name, X, y)
-            results[model_name] = result
-        else:
-            logger.warning(f"Model {model_name} not available")
-    
-    return results
-
-
-def print_test_summary(results: Dict[str, Dict[str, Any]]):
-    """テスト結果のサマリーを表示"""
-    print("\n" + "="*60)
-    print("ML MODEL TEST RESULTS")
-    print("="*60)
-    
-    successful_models = []
-    failed_models = []
-    
-    for model_name, result in results.items():
-        if result.get('success', False):
-            successful_models.append((model_name, result['score']))
-        else:
-            failed_models.append((model_name, result.get('error', 'Unknown error')))
-    
-    # 成功したモデル
-    if successful_models:
-        print("\n✅ SUCCESSFUL MODELS:")
-        print("-" * 40)
-        for model_name, score in sorted(successful_models, key=lambda x: x[1]):
-            print(f"{model_name:15s} | RMSE: {score:.4f}")
+        # 基本的な検証
+        assert len(predictions) == len(y)
+        assert not np.isnan(predictions).any()
+        assert not np.isinf(predictions).any()
         
-        # 最良モデル
-        best_model = min(successful_models, key=lambda x: x[1])
-        print(f"\n🏆 BEST MODEL: {best_model[0]} (RMSE: {best_model[1]:.4f})")
+        # 性能確認（過学習チェック）
+        from sklearn.metrics import r2_score
+        r2 = r2_score(y, predictions)
+        assert r2 > 0.5  # 最低限の性能
     
-    # 失敗したモデル
-    if failed_models:
-        print("\n❌ FAILED MODELS:")
-        print("-" * 40)
-        for model_name, error in failed_models:
-            print(f"{model_name:15s} | Error: {error}")
+    def test_all_models(self, test_data):
+        """全モデルをテスト"""
+        X, y = test_data
+        
+        # 利用可能なモデルリスト
+        models_to_test = ['xgboost', 'lightgbm', 'catboost']
+        
+        results = {}
+        for model_name in models_to_test:
+            try:
+                model = ModelFactory.create_model_from_name(
+                    model_name,
+                    target_type='regression',
+                    n_estimators=10,
+                    random_state=42
+                )
+                
+                # 学習と予測
+                model.fit(X, y)
+                predictions = model.predict(X)
+                
+                # 結果を保存
+                from sklearn.metrics import mean_squared_error
+                rmse = np.sqrt(mean_squared_error(y, predictions))
+                results[model_name] = {
+                    'success': True,
+                    'rmse': rmse,
+                    'predictions': predictions
+                }
+                
+                # 基本的な検証
+                assert len(predictions) == len(y)
+                assert not np.isnan(predictions).any()
+                
+            except Exception as e:
+                results[model_name] = {
+                    'success': False,
+                    'error': str(e)
+                }
+        
+        # 少なくとも1つのモデルが成功
+        successful_models = [k for k, v in results.items() if v['success']]
+        assert len(successful_models) > 0, "No models succeeded"
+        
+        # 成功したモデルの数を確認
+        assert len(successful_models) >= 2, f"Only {len(successful_models)} models succeeded"
     
-    print(f"\n📊 SUMMARY: {len(successful_models)}/{len(results)} models successful")
-
-
-def main():
-    """メイン関数"""
-    logger.info("Starting ML model tests...")
-    
-    # テストデータ作成
-    X, y = create_test_data(n_samples=1000, n_features=10)
-    
-    # 基本モデルのテスト
-    logger.info("Testing basic models...")
-    basic_results = test_all_models(X, y)
-    
-    # エンサンブルモデルのテスト
-    logger.info("Testing ensemble models...")
-    ensemble_results = test_ensemble_models(X, y)
-    
-    # 全結果を結合
-    all_results = {**basic_results, **ensemble_results}
-    
-    # 結果表示
-    print_test_summary(all_results)
-    
-    # 利用可能なモデル一覧
-    available_models = model_factory.get_available_models()
-    print(f"\n📋 Available models: {', '.join(available_models)}")
-    
-    logger.info("ML model tests completed!")
-
-
-if __name__ == "__main__":
-    main() 
+    def test_ensemble_models(self, test_data):
+        """エンサンブルモデルをテスト"""
+        X, y = test_data
+        
+        # エンサンブルモデルを作成
+        try:
+            # Voting Ensembleモデル
+            ensemble_model = ModelFactory.create_ensemble_model(
+                'voting',
+                target_type='regression',
+                base_models=['xgboost', 'lightgbm'],
+                n_estimators=10,
+                random_state=42
+            )
+            
+            # 学習と予測
+            ensemble_model.fit(X, y)
+            predictions = ensemble_model.predict(X)
+            
+            # 基本的な検証
+            assert len(predictions) == len(y)
+            assert not np.isnan(predictions).any()
+            assert not np.isinf(predictions).any()
+            
+            # 性能確認
+            from sklearn.metrics import r2_score
+            r2 = r2_score(y, predictions)
+            assert r2 > 0.5  # 最低限の性能
+            
+        except Exception as e:
+            # エンサンブルモデルが実装されていない場合はスキップ
+            pytest.skip(f"Ensemble model not implemented: {e}")

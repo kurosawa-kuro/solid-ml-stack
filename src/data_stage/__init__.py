@@ -1,1 +1,0 @@
-# Data processing stages (Bronze, Silver, Gold) 
